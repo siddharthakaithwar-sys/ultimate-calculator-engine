@@ -1,108 +1,96 @@
-/* ===============================
-   ULTIMATE CALCULATOR ENGINE
-   Stable | Readable | % Fixed
-   =============================== */
-
-let display = document.getElementById("display");
-let historyBox = document.getElementById("history");
+const display = document.getElementById("display");
+const historyBox = document.getElementById("history");
+const buttons = document.querySelectorAll("button");
 
 let expr = "";
-let isDeg = false;
+let isDeg = true;
 
 /* ---------- DISPLAY ---------- */
-function updateDisplay(text) {
-  display.innerText = text || "0";
+function updateDisplay(v = "0") {
+  display.innerText = v;
+}
+
+/* ---------- BUTTON HANDLER ---------- */
+buttons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const val = btn.dataset.value;
+    const func = btn.dataset.func;
+    const action = btn.dataset.action;
+
+    if (val) press(val);
+    else if (func) press(func + "(");
+    else if (action) handleAction(action);
+  });
+});
+
+function handleAction(action) {
+  if (action === "clear") {
+    expr = "";
+    updateDisplay();
+  }
+
+  if (action === "deg") {
+    isDeg = !isDeg;
+    document.getElementById("mode").innerText = isDeg ? "DEG" : "RAD";
+  }
+
+  if (action === "percent") {
+    expr += "/100";
+    updateDisplay(expr);
+  }
 }
 
 /* ---------- INPUT ---------- */
-window.press = function (v) {
+function press(v) {
   if (expr === "Error") expr = "";
   expr += v;
   updateDisplay(expr);
-};
-
-window.clearAll = function () {
-  expr = "";
-  updateDisplay("0");
-};
-
-window.backspace = function () {
-  expr = expr.slice(0, -1);
-  updateDisplay(expr || "0");
-};
-
-/* ---------- DEG / RAD ---------- */
-window.toggleDeg = function () {
-  isDeg = !isDeg;
-  document.getElementById("mode").innerText = isDeg ? "DEG" : "RAD";
-};
-
-/* ---------- FUNCTIONS ---------- */
-window.func = function (name) {
-  expr += name + "(";
-  updateDisplay(expr);
-};
-
-/* ---------- % HANDLER ---------- */
-function normalizePercent(input) {
-  // converts: 600×69.5% → 600×(69.5/100)
-  return input.replace(
-    /(\d+(\.\d+)?)%/g,
-    (_, n) => `(${n}/100)`
-  );
-}
-
-/* ---------- DEG → RAD ---------- */
-function applyTrig(expr) {
-  if (!isDeg) return expr;
-
-  return expr
-    .replace(/sin\(([^)]+)\)/g, (_, a) => `Math.sin((${a})*Math.PI/180)`)
-    .replace(/cos\(([^)]+)\)/g, (_, a) => `Math.cos((${a})*Math.PI/180)`)
-    .replace(/tan\(([^)]+)\)/g, (_, a) => `Math.tan((${a})*Math.PI/180)`);
-}
-
-/* ---------- FORMAT OUTPUT ---------- */
-function formatNumber(n) {
-  if (!isFinite(n)) return "Error";
-
-  let s = n.toString();
-
-  // prevent scientific notation
-  if (s.includes("e")) {
-    s = n.toFixed(15).replace(/\.?0+$/, "");
-  }
-
-  return s;
 }
 
 /* ---------- CALCULATE ---------- */
-window.calculate = function () {
+document.getElementById("equals").addEventListener("click", () => {
   try {
-    let raw = expr;
+    let e = expr;
 
-    let engineExpr = normalizePercent(raw);
-    engineExpr = applyTrig(engineExpr);
-
-    let result = Function(`"use strict";return (${engineExpr})`)();
-
-    let out = formatNumber(result);
-
-    // history
-    if (historyBox) {
-      let h = document.createElement("div");
-      h.innerText = `${raw} = ${out}`;
-      historyBox.prepend(h);
+    if (isDeg) {
+      e = e
+        .replace(/sin\(([^)]+)\)/g, (_, a) => `Math.sin(${a}*Math.PI/180)`)
+        .replace(/cos\(([^)]+)\)/g, (_, a) => `Math.cos(${a}*Math.PI/180)`)
+        .replace(/tan\(([^)]+)\)/g, (_, a) => `Math.tan(${a}*Math.PI/180)`);
     }
 
+    let result = Function(`return (${e})`)();
+    let out = format(result);
+
+    addHistory(expr, out);
     expr = out;
     updateDisplay(out);
 
-  } catch (e) {
+  } catch {
     expr = "Error";
     updateDisplay("Error");
   }
+});
+
+/* ---------- FORMAT ---------- */
+function format(n) {
+  if (!isFinite(n)) return "Error";
+  let s = n.toString();
+  if (s.includes("e")) {
+    s = n.toFixed(15).replace(/\.?0+$/, "");
+  }
+  return s;
+}
+
+/* ---------- HISTORY ---------- */
+function addHistory(exp, res) {
+  const d = document.createElement("div");
+  d.innerText = `${exp} = ${res}`;
+  historyBox.prepend(d);
+}
+
+document.getElementById("clearHistory").onclick = () => {
+  historyBox.innerHTML = "";
 };
 
-/* ---------- INIT ---------- */
-updateDisplay("0");
+updateDisplay();
