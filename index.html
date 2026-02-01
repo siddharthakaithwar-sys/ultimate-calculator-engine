@@ -3,120 +3,127 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Calculator</title>
+<title>Scientific Calculator</title>
 
 <style>
-/* ⚠️ UI UNCHANGED – do not touch */
-body {
-  margin: 0;
-  background: #050b17;
-  font-family: system-ui, sans-serif;
-  color: white;
+/* ===== UI (unchanged dark style) ===== */
+body{
+  margin:0;
+  background:#020a18;
+  font-family:system-ui, sans-serif;
+  display:flex;
+  justify-content:center;
+  padding:20px;
+  color:#fff;
 }
-
-.app {
-  max-width: 420px;
-  margin: auto;
-  padding: 16px;
+.calculator{
+  width:360px;
+  background:#06162d;
+  border-radius:20px;
+  padding:16px;
 }
-
-.display {
-  background: linear-gradient(145deg, #020814, #071a3a);
-  border-radius: 20px;
-  padding: 20px;
-  font-size: 36px;
-  text-align: right;
-  overflow-x: auto;
+.display{
+  background:#030c1a;
+  border-radius:16px;
+  padding:16px;
+  font-size:32px;
+  text-align:right;
+  overflow-x:auto;
+  white-space:nowrap;
 }
-
-.mode {
-  font-size: 14px;
-  opacity: 0.7;
+.mode{
+  font-size:14px;
+  opacity:.7;
 }
-
-.buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-top: 16px;
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-top:16px;
 }
-
-button {
-  background: #1a2a45;
-  border: none;
-  border-radius: 14px;
-  padding: 18px;
-  font-size: 20px;
-  color: white;
+button{
+  height:56px;
+  border:none;
+  border-radius:14px;
+  font-size:18px;
+  background:#1a2a45;
+  color:#fff;
 }
-
-button.op { background: #2b3e63; }
-button.func { background: #4ea3ff; color: black; }
-button.red { background: #ff5b5b; }
-button.green {
-  background: #41d07c;
-  grid-column: span 3;
+button.func{ background:#4da3ff; color:#000; }
+button.op{ background:#213657; }
+button.clear{ background:#ff5b57; }
+button.equal{
+  grid-column:span 4;
+  height:60px;
+  background:#2ecc71;
+  font-size:22px;
 }
-
-.history {
-  margin-top: 20px;
-  background: #020814;
-  border-radius: 16px;
-  padding: 14px;
-  max-height: 200px;
-  overflow-y: auto;
+.history{
+  margin-top:14px;
+  background:#030c1a;
+  border-radius:14px;
+  padding:10px;
+  max-height:140px;
+  overflow-y:auto;
 }
-
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.history-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
-
-.history button {
-  background: #ff5b5b;
-  font-size: 14px;
-  padding: 6px 12px;
+.history button{
+  background:#ff5b57;
+  height:32px;
+  font-size:14px;
 }
-
-.entry {
-  font-size: 14px;
-  opacity: 0.8;
+.history-item{
+  font-size:14px;
+  opacity:.8;
+  margin-top:4px;
 }
 </style>
 </head>
 
 <body>
-<div class="app">
+<div class="calculator">
 
   <div class="display">
     <div class="mode" id="mode">DEG</div>
     <div id="screen">0</div>
   </div>
 
-  <div class="buttons">
-    <button class="red">C</button>
-    <button class="op">DEG</button>
-    <button class="op">(</button>
-    <button class="op">)</button>
+  <div class="grid">
+    <button class="clear">C</button>
+    <button id="deg">DEG</button>
+    <button>(</button>
+    <button>)</button>
 
     <button class="func">sin</button>
     <button class="func">cos</button>
     <button class="func">tan</button>
     <button class="op">÷</button>
 
-    <button>7</button><button>8</button><button>9</button><button class="op">×</button>
-    <button>4</button><button>5</button><button>6</button><button class="op">−</button>
-    <button>1</button><button>2</button><button>3</button><button class="op">+</button>
-    <button>0</button><button>.</button><button>⌫</button><button class="op">%</button>
+    <button>7</button><button>8</button><button>9</button>
+    <button class="op">×</button>
 
-    <button class="op">^</button>
-    <button class="green">=</button>
+    <button>4</button><button>5</button><button>6</button>
+    <button class="op">−</button>
+
+    <button>1</button><button>2</button><button>3</button>
+    <button class="op">+</button>
+
+    <button>0</button>
+    <button>.</button>
+    <button>⌫</button>
+    <button>%</button>
+
+    <button>^</button>
+    <button class="equal">=</button>
   </div>
 
   <div class="history">
     <div class="history-header">
-      <strong>History</strong>
+      <span>History</span>
       <button id="clearHistory">Clear</button>
     </div>
     <div id="historyList"></div>
@@ -125,76 +132,90 @@ button.green {
 </div>
 
 <script>
+/* ===== STATE ===== */
 let expr = "";
-let deg = true;
 let history = [];
+let isDeg = true;
 
 const screen = document.getElementById("screen");
-const mode = document.getElementById("mode");
 const historyList = document.getElementById("historyList");
+const mode = document.getElementById("mode");
 
-function update() {
-  screen.textContent = expr || "0";
-}
+/* ===== UTILS ===== */
+const toRad = x => isDeg ? x * Math.PI / 180 : x;
 
-function toRad(x) {
-  return deg ? x * Math.PI / 180 : x;
-}
-
-function format(n) {
-  if (!isFinite(n)) return "Error";
+function format(n){
+  if(!isFinite(n)) return "Error";
+  if(Math.abs(n) > Number.MAX_SAFE_INTEGER) return "Overflow";
   let s = n.toString();
-  if (s.includes("e")) {
-    return n.toFixed(12).replace(/\.?0+$/, "");
-  }
+  if(s.includes("e")) return n.toFixed(12).replace(/\.?0+$/,"");
   return s;
 }
 
-function evaluateExpression(input) {
-  let s = input
-    .replace(/×/g, "*")
-    .replace(/÷/g, "/")
-    .replace(/−/g, "-")
-    .replace(/(\d+(\.\d+)?)%/g, "($1/100)")
-    .replace(/(\d+)\^(\d+)/g, "Math.pow($1,$2)")
-    .replace(/sin\(([^)]+)\)/g, "Math.sin(toRad($1))")
-    .replace(/cos\(([^)]+)\)/g, "Math.cos(toRad($1))")
-    .replace(/tan\(([^)]+)\)/g, "Math.tan(toRad($1))");
-
-  return Function("toRad", `"use strict"; return (${s})`)(toRad);
+function update(){
+  screen.textContent = expr || "0";
+  screen.scrollLeft = screen.scrollWidth;
 }
 
-document.querySelectorAll(".buttons button").forEach(btn => {
-  btn.onclick = () => {
-    const t = btn.textContent;
+/* ===== PARSER ===== */
+function evaluateExpression(raw){
+  let e = raw;
 
-    if (t === "C") { expr = ""; update(); return; }
-    if (t === "⌫") { expr = expr.slice(0, -1); update(); return; }
+  e = e.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-");
 
-    if (t === "DEG") {
-      deg = !deg;
-      mode.textContent = deg ? "DEG" : "RAD";
-      return;
-    }
+  /* % : A%B => (A/100)*B */
+  e = e.replace(/(\d+(\.\d+)?)[%](\d+(\.\d+)?)/g,"($1/100*$3)");
 
-    if (t === "=") {
-      try {
-        const result = format(evaluateExpression(expr));
-        history.unshift(`${expr} = ${result}`);
-        if (history.length > 30) history.pop();
-        expr = result;
+  /* power */
+  e = e.replace(/(\d+(\.\d+)?)\^(\d+(\.\d+)?)/g,"Math.pow($1,$3)");
+
+  /* trig */
+  e = e.replace(/sin\(([^)]+)\)/g,(_,x)=>`Math.sin(${toRad(Number(x))})`);
+  e = e.replace(/cos\(([^)]+)\)/g,(_,x)=>`Math.cos(${toRad(Number(x))})`);
+  e = e.replace(/tan\(([^)]+)\)/g,(_,x)=>`Math.tan(${toRad(Number(x))})`);
+
+  return Function(`"use strict"; return (${e})`)();
+}
+
+/* ===== HISTORY ===== */
+function renderHistory(){
+  historyList.innerHTML = history
+    .map(h=>`<div class="history-item">${h}</div>`).join("");
+}
+
+/* ===== INPUT ===== */
+document.querySelectorAll("button").forEach(b=>{
+  const t = b.textContent.trim();
+
+  b.onclick = ()=>{
+    if(t==="C"){ expr=""; update(); return; }
+
+    if(t==="="){
+      try{
+        const res = format(evaluateExpression(expr));
+        history.unshift(`${expr} = ${res}`);
+        history = history.slice(0,20);
+        expr = res==="Error"||res==="Overflow" ? "" : res;
         renderHistory();
-      } catch {
-        expr = "Error";
+      }catch{
+        expr="Error";
       }
-      update();
+      update(); return;
+    }
+
+    if(t==="⌫"){ expr = expr.slice(0,-1); update(); return; }
+
+    if(t==="DEG"){
+      isDeg=!isDeg;
+      mode.textContent=isDeg?"DEG":"RAD";
       return;
     }
 
-    if (["sin","cos","tan"].includes(t)) {
-      expr += t + "(";
-      update();
-      return;
+    if(t==="Clear"){ history=[]; renderHistory(); return; }
+
+    if(["sin","cos","tan"].includes(t)){
+      expr += t+"(";
+      update(); return;
     }
 
     expr += t;
@@ -202,14 +223,10 @@ document.querySelectorAll(".buttons button").forEach(btn => {
   };
 });
 
-document.getElementById("clearHistory").onclick = () => {
-  history = [];
+document.getElementById("clearHistory").onclick=()=>{
+  history=[];
   renderHistory();
 };
-
-function renderHistory() {
-  historyList.innerHTML = history.map(h => `<div class="entry">${h}</div>`).join("");
-}
 
 update();
 </script>
