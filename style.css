@@ -1,83 +1,85 @@
-*{
-  box-sizing:border-box;
-  user-select:none;
+body {
+  background: radial-gradient(#0b1220, #020409);
+  font-family: system-ui;
+  color: white;
 }
 
-body{
-  margin:0;
-  background:#000;
-  color:#fff;
-  font-family:system-ui, monospace;
-  display:flex;
-  justify-content:center;
+.calculator {
+  max-width: 360px;
+  margin: 30px auto;
+  background: #121c2d;
+  border-radius: 20px;
+  padding: 20px;
 }
 
-.calculator{
-  width:360px;
-  padding:20px;
+.display-box {
+  background: #020817;
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 15px;
 }
 
-.display{
-  background:#0a0a0a;
-  color:#00eaff;
-  padding:20px;
-  border-radius:14px;
-  font-size:26px;
-  min-height:60px;
-  overflow-x:auto;
-  white-space:nowrap;
+#mode {
+  color: #6bbcff;
+  font-size: 14px;
 }
 
-.buttons{
-  margin-top:15px;
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
+#display {
+  font-size: 28px;
+  word-wrap: break-word;
 }
 
-button{
-  padding:18px;
-  font-size:18px;
-  border:none;
-  border-radius:14px;
-  background:#1c1c1c;
-  color:#fff;
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
 }
 
-button:active{
-  background:#333;
+button {
+  padding: 15px;
+  border-radius: 15px;
+  border: none;
+  background: #2b3b55;
+  color: white;
+  font-size: 16px;
 }
 
-.danger{
-  background:#c62828;
+button.blue {
+  background: #4fa8f5;
+  color: #041625;
 }
 
-.equals{
-  background:#007bff;
+button.danger {
+  background: #e84545;
 }
 
-.wide{
-  grid-column:span 2;
+button.equals {
+  grid-column: span 4;
+  background: #2ecc71;
+  font-size: 20px;
 }
 
-.history{
-  margin-top:20px;
-  background:#0a0a0a;
-  border-radius:14px;
-  padding:10px;
-  max-height:180px;
-  overflow-y:auto;
+.history {
+  margin-top: 15px;
+  background: #0b1425;
+  border-radius: 15px;
+  padding: 10px;
 }
 
-.history h3{
-  margin:5px 0 10px;
-  color:#aaa;
-  font-size:14px;
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
 }
 
-.history-item{
-  font-size:14px;
-  margin-bottom:6px;
-  color:#ddd;
-  word-break:break-all;
+.history button {
+  background: #e84545;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+#history {
+  max-height: 120px;
+  overflow-y: auto;
+  font-size: 13px;
 }
