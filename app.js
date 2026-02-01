@@ -1,106 +1,79 @@
-const display = document.getElementById("display");
-const modeLabel = document.getElementById("mode");
-const historyBox = document.getElementById("history");
-
 let expression = "";
-let isDeg = true;
+let degMode = true;
 
-/* ---------- DISPLAY ---------- */
-function updateDisplay(val) {
-  display.textContent = val || "0";
+const screen = document.getElementById("screen");
+const modeEl = document.getElementById("mode");
+const historyList = document.getElementById("historyList");
+
+function updateScreen(value) {
+  screen.textContent = value;
 }
 
-/* ---------- INPUT ---------- */
 function press(val) {
-  if (display.textContent === "Error") expression = "";
   expression += val;
-  updateDisplay(expression);
+  updateScreen(expression);
 }
 
-/* ---------- CLEAR ---------- */
-function clearAll() {
-  expression = "";
-  updateDisplay("0");
-}
-
-/* ---------- BACKSPACE ---------- */
 function backspace() {
   expression = expression.slice(0, -1);
-  updateDisplay(expression);
+  updateScreen(expression || "0");
 }
 
-/* ---------- DEG / RAD ---------- */
+function clearAll() {
+  expression = "";
+  updateScreen("0");
+}
+
 function toggleDeg() {
-  isDeg = !isDeg;
-  modeLabel.textContent = isDeg ? "DEG" : "RAD";
+  degMode = !degMode;
+  modeEl.textContent = degMode ? "DEG" : "RAD";
 }
 
-/* ---------- FUNCTIONS ---------- */
 function func(name) {
   expression += `${name}(`;
-  updateDisplay(expression);
+  updateScreen(expression);
 }
 
-/* ---------- PERCENT LOGIC ---------- */
-/*
-600 % 69.5  => 600 * 69.5 / 100
-*/
-function resolvePercent(expr) {
-  return expr.replace(/(\d+(\.\d+)?)\s*%\s*(\d+(\.\d+)?)/g,
-    (_, a, _, b) => `(${a}*${b}/100)`
-  );
-}
-
-/* ---------- DEG → RAD ---------- */
-function trigWrap(expr) {
-  if (!isDeg) return expr;
-
-  return expr
-    .replace(/sin([^)]+)/g, "Math.sin(($1)*Math.PI/180)")
-    .replace(/cos([^)]+)/g, "Math.cos(($1)*Math.PI/180)")
-    .replace(/tan([^)]+)/g, "Math.tan(($1)*Math.PI/180)");
-}
-
-/* ---------- POWER ---------- */
-/*
-5^2 => Math.pow(5,2)
-*/
-function resolvePower(expr) {
-  return expr.replace(/(\d+(\.\d+)?)\^(\d+(\.\d+)?)/g,
-    "Math.pow($1,$3)"
-  );
-}
-
-/* ---------- CALCULATE ---------- */
-function calculate() {
+function percent() {
   try {
-    let expr = expression;
-
-    expr = resolvePercent(expr);
-    expr = resolvePower(expr);
-    expr = trigWrap(expr);
-
-    const result = Function(`"use strict"; return (${expr})`)();
-
-    if (!isFinite(result)) throw "Math Error";
-
-    addHistory(`${expression} = ${result}`);
-    expression = result.toString();
-    updateDisplay(expression);
-
+    let val = eval(expression);
+    val = val / 100;
+    addHistory(expression + "%", val);
+    expression = String(val);
+    updateScreen(expression);
   } catch {
-    updateDisplay("Error");
-    expression = "";
+    updateScreen("Error");
   }
 }
 
-/* ---------- HISTORY ---------- */
-function addHistory(text) {
-  const row = document.createElement("div");
-  row.textContent = text;
-  historyBox.prepend(row);
+function calculate() {
+  try {
+    let exp = expression
+      .replace(/sin\(/g, "Math.sin(")
+      .replace(/cos\(/g, "Math.cos(")
+      .replace(/tan\(/g, "Math.tan(");
+
+    if (degMode) {
+      exp = exp.replace(/Math\.(sin|cos|tan)\(([^)]+)\)/g,
+        (_, fn, val) => `Math.${fn}(${val} * Math.PI / 180)`
+      );
+    }
+
+    let result = eval(exp);
+    addHistory(expression, result);
+    expression = String(result);
+    updateScreen(expression);
+  } catch {
+    updateScreen("Error");
+  }
+}
+
+function addHistory(exp, res) {
+  const div = document.createElement("div");
+  div.textContent = `${exp} = ${res}`;
+  historyList.prepend(div);
 }
 
 function clearHistory() {
-  historyBox.innerHTML = "";
+  historyList.innerHTML = "";
 }
