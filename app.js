@@ -1,126 +1,106 @@
 const display = document.getElementById("display");
+const modeLabel = document.getElementById("mode");
 const historyBox = document.getElementById("history");
-const buttons = document.querySelectorAll("button");
 
-let expr = "";
+let expression = "";
 let isDeg = true;
 
 /* ---------- DISPLAY ---------- */
-function updateDisplay(v = "0") {
-  display.innerText = v;
-}
-
-/* ---------- BUTTON EVENTS ---------- */
-buttons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const val = btn.dataset.value;
-    const func = btn.dataset.func;
-    const action = btn.dataset.action;
-
-    if (val) press(val);
-    else if (func) press(func + "(");
-    else if (action) handleAction(action);
-  });
-});
-
-/* ---------- ACTIONS ---------- */
-function handleAction(action) {
-  switch (action) {
-    case "clear":
-      expr = "";
-      updateDisplay();
-      break;
-
-    case "deg":
-      isDeg = !isDeg;
-      document.getElementById("mode").innerText = isDeg ? "DEG" : "RAD";
-      break;
-
-    case "backspace":
-      expr = expr.slice(0, -1);
-      updateDisplay(expr || "0");
-      break;
-
-    case "percent":
-      applyPercent();
-      break;
-  }
+function updateDisplay(val) {
+  display.textContent = val || "0";
 }
 
 /* ---------- INPUT ---------- */
-function press(v) {
-  if (expr === "Error") expr = "";
-  expr += v;
-  updateDisplay(expr);
+function press(val) {
+  if (display.textContent === "Error") expression = "";
+  expression += val;
+  updateDisplay(expression);
 }
 
-/* ---------- % LOGIC (REAL CALCULATOR) ---------- */
-function applyPercent() {
-  try {
-    const match = expr.match(/(.+?)([\+\-\*\/])(.+)$/);
+/* ---------- CLEAR ---------- */
+function clearAll() {
+  expression = "";
+  updateDisplay("0");
+}
 
-    if (match) {
-      const a = parseFloat(match[1]);
-      const op = match[2];
-      const b = parseFloat(match[3]);
+/* ---------- BACKSPACE ---------- */
+function backspace() {
+  expression = expression.slice(0, -1);
+  updateDisplay(expression);
+}
 
-      const percentValue = (a * b) / 100;
-      expr = a + op + percentValue;
-    } else {
-      expr = (parseFloat(expr) / 100).toString();
-    }
+/* ---------- DEG / RAD ---------- */
+function toggleDeg() {
+  isDeg = !isDeg;
+  modeLabel.textContent = isDeg ? "DEG" : "RAD";
+}
 
-    updateDisplay(expr);
-  } catch {
-    expr = "Error";
-    updateDisplay("Error");
-  }
+/* ---------- FUNCTIONS ---------- */
+function func(name) {
+  expression += `${name}(`;
+  updateDisplay(expression);
+}
+
+/* ---------- PERCENT LOGIC ---------- */
+/*
+600 % 69.5  => 600 * 69.5 / 100
+*/
+function resolvePercent(expr) {
+  return expr.replace(/(\d+(\.\d+)?)\s*%\s*(\d+(\.\d+)?)/g,
+    (_, a, _, b) => `(${a}*${b}/100)`
+  );
+}
+
+/* ---------- DEG → RAD ---------- */
+function trigWrap(expr) {
+  if (!isDeg) return expr;
+
+  return expr
+    .replace(/sin([^)]+)/g, "Math.sin(($1)*Math.PI/180)")
+    .replace(/cos([^)]+)/g, "Math.cos(($1)*Math.PI/180)")
+    .replace(/tan([^)]+)/g, "Math.tan(($1)*Math.PI/180)");
+}
+
+/* ---------- POWER ---------- */
+/*
+5^2 => Math.pow(5,2)
+*/
+function resolvePower(expr) {
+  return expr.replace(/(\d+(\.\d+)?)\^(\d+(\.\d+)?)/g,
+    "Math.pow($1,$3)"
+  );
 }
 
 /* ---------- CALCULATE ---------- */
-document.getElementById("equals").addEventListener("click", () => {
+function calculate() {
   try {
-    let e = expr;
+    let expr = expression;
 
-    if (isDeg) {
-      e = e
-        .replace(/sin([^)]+)/g, (_, a) => `Math.sin(${a}*Math.PI/180)`)
-        .replace(/cos([^)]+)/g, (_, a) => `Math.cos(${a}*Math.PI/180)`)
-        .replace(/tan([^)]+)/g, (_, a) => `Math.tan(${a}*Math.PI/180)`);
-    }
+    expr = resolvePercent(expr);
+    expr = resolvePower(expr);
+    expr = trigWrap(expr);
 
-    let result = Function(`return (${e})`)();
-    let out = format(result);
+    const result = Function(`"use strict"; return (${expr})`)();
 
-    addHistory(expr, out);
-    expr = out;
-    updateDisplay(out);
+    if (!isFinite(result)) throw "Math Error";
+
+    addHistory(`${expression} = ${result}`);
+    expression = result.toString();
+    updateDisplay(expression);
 
   } catch {
-    expr = "Error";
     updateDisplay("Error");
+    expression = "";
   }
-});
-
-/* ---------- FORMAT ---------- */
-function format(n) {
-  if (!isFinite(n)) return "Error";
-  let s = n.toString();
-  if (s.includes("e")) {
-    s = n.toFixed(15).replace(/\.?0+$/, "");
-  }
-  return s;
 }
 
 /* ---------- HISTORY ---------- */
-function addHistory(exp, res) {
-  const d = document.createElement("div");
-  d.innerText = `${exp} = ${res}`;
-  historyBox.prepend(d);
+function addHistory(text) {
+  const row = document.createElement("div");
+  row.textContent = text;
+  historyBox.prepend(row);
 }
 
-document.getElementById("clearHistory").onclick = () => {
+function clearHistory() {
   historyBox.innerHTML = "";
-};
-
-updateDisplay();
+}
