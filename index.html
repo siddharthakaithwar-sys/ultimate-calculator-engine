@@ -1,132 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ultimate Calculator E1</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ultimate Calculator</title>
 
 <style>
-*{box-sizing:border-box;font-family:system-ui}
-body{
-  margin:0;
-  background:#0b1220;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
+* { box-sizing: border-box; font-family: system-ui, sans-serif; }
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #0f1c3a, #020617);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
-.calc{
-  width:360px;
-  background:#111a2e;
-  padding:18px;
-  border-radius:26px;
-  box-shadow:0 25px 50px rgba(0,0,0,.6);
+
+.calc {
+  width: 360px;
+  background: #0b1530;
+  border-radius: 26px;
+  padding: 18px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
 }
-.display{
-  height:72px;
-  background:#050b18;
-  border-radius:16px;
-  color:#fff;
-  padding:14px;
-  font-size:26px;
-  text-align:right;
-  overflow-x:auto;
+
+.display {
+  background: #020617;
+  border-radius: 18px;
+  padding: 18px;
+  font-size: 28px;
+  text-align: right;
+  min-height: 60px;
+  overflow-x: auto;
 }
-.keys{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:12px;
-  margin-top:16px;
+
+.mode {
+  text-align: right;
+  font-size: 12px;
+  opacity: .6;
+  margin-bottom: 6px;
 }
-button{
-  height:56px;
-  border:none;
-  border-radius:50%;
-  background:#1e2840;
-  color:#fff;
-  font-size:18px;
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 16px;
 }
-button.op{background:#26355a}
-button.eq{background:#20c96b;color:#000}
-button.clear{background:#e94b4b}
-button.fn{background:#364a73}
-button:active{transform:scale(.96)}
+
+.btn {
+  height: 58px;
+  border-radius: 50%;
+  border: none;
+  font-size: 18px;
+  background: #1b2a4a;
+  color: #fff;
+  cursor: pointer;
+}
+.btn.op { background: #24365f; }
+.btn.fn { background: #2e4070; }
+.btn.red { background: #ef4444; }
+.btn.green {
+  background: #22c55e;
+  grid-column: span 4;
+  border-radius: 30px;
+  font-size: 22px;
+}
+
+.history {
+  margin-top: 12px;
+  max-height: 140px;
+  overflow-y: auto;
+  background: rgba(0,0,0,.25);
+  border-radius: 12px;
+  padding: 6px;
+  font-size: 14px;
+}
+.history div {
+  padding: 4px 6px;
+  cursor: pointer;
+  opacity: .85;
+}
+.history div:hover { background: rgba(255,255,255,.08); }
 </style>
 </head>
 
 <body>
 <div class="calc">
-  <div id="display" class="display">0</div>
 
-  <div class="keys">
-    <button class="clear" onclick="clr()">C</button>
-    <button class="fn" onclick="fn('sin(')">sin</button>
-    <button class="fn" onclick="fn('cos(')">cos</button>
-    <button class="fn" onclick="fn('tan(')">tan</button>
+<div class="mode" id="mode">RAD</div>
+<div class="display" id="display">0</div>
 
-    <button class="fn" onclick="fn('log(')">log</button>
-    <button class="fn" onclick="fn('sqrt(')">√</button>
-    <button onclick="inp('(')">(</button>
-    <button onclick="inp(')')">)</button>
+<div class="grid">
+<button class="btn red" onclick="clearAll()">C</button>
+<button class="btn fn" onclick="toggleMode()">DEG</button>
+<button class="btn fn" onclick="insert('(')">(</button>
+<button class="btn fn" onclick="insert(')')">)</button>
 
-    <button onclick="inp('7')">7</button>
-    <button onclick="inp('8')">8</button>
-    <button onclick="inp('9')">9</button>
-    <button class="op" onclick="inp('/')">÷</button>
+<button class="btn fn" onclick="func('sin')">sin</button>
+<button class="btn fn" onclick="func('cos')">cos</button>
+<button class="btn fn" onclick="func('tan')">tan</button>
+<button class="btn fn" onclick="insert('/')">÷</button>
 
-    <button onclick="inp('4')">4</button>
-    <button onclick="inp('5')">5</button>
-    <button onclick="inp('6')">6</button>
-    <button class="op" onclick="inp('*')">×</button>
+<button class="btn" onclick="insert('7')">7</button>
+<button class="btn" onclick="insert('8')">8</button>
+<button class="btn" onclick="insert('9')">9</button>
+<button class="btn op" onclick="insert('*')">×</button>
 
-    <button onclick="inp('1')">1</button>
-    <button onclick="inp('2')">2</button>
-    <button onclick="inp('3')">3</button>
-    <button class="op" onclick="inp('-')">−</button>
+<button class="btn" onclick="insert('4')">4</button>
+<button class="btn" onclick="insert('5')">5</button>
+<button class="btn" onclick="insert('6')">6</button>
+<button class="btn op" onclick="insert('-')">−</button>
 
-    <button onclick="inp('0')">0</button>
-    <button onclick="inp('.')">.</button>
-    <button onclick="inp('^')">^</button>
-    <button class="op" onclick="inp('+')">+</button>
+<button class="btn" onclick="insert('1')">1</button>
+<button class="btn" onclick="insert('2')">2</button>
+<button class="btn" onclick="insert('3')">3</button>
+<button class="btn op" onclick="insert('+')">+</button>
 
-    <button style="grid-column:span 4" class="eq" onclick="calc()">=</button>
-  </div>
+<button class="btn" onclick="insert('0')">0</button>
+<button class="btn" onclick="insert('.')">.</button>
+<button class="btn fn" onclick="backspace()">⌫</button>
+
+<button class="btn green" onclick="calculate()">=</button>
+</div>
+
+<div class="history" id="history"></div>
+
 </div>
 
 <script>
-let exp="";
-const d=document.getElementById("display");
+let expr = "";
+let history = [];
+let deg = false;
 
-function inp(v){
-  if(d.innerText==="0") exp="";
-  exp+=v;
-  d.innerText=exp;
-}
-function fn(v){ inp(v); }
-function clr(){
-  exp="";
-  d.innerText="0";
+const display = document.getElementById("display");
+const historyBox = document.getElementById("history");
+const modeText = document.getElementById("mode");
+
+function update() {
+  display.textContent = expr || "0";
 }
 
-function calc(){
-  try{
-    let e = exp
-      .replace(/÷/g,'/')
-      .replace(/×/g,'*')
-      .replace(/(\d+)\^(\d+)/g,'Math.pow($1,$2)')
-      .replace(/sin/g,'Math.sin')
-      .replace(/cos/g,'Math.cos')
-      .replace(/tan/g,'Math.tan')
-      .replace(/log/g,'Math.log10')
-      .replace(/sqrt/g,'Math.sqrt');
+function insert(v) {
+  expr += v;
+  update();
+}
 
-    let r = Function("return "+e)();
-    d.innerText = Number.isFinite(r) ? r : "ERROR";
-    exp = d.innerText;
-  }catch{
-    d.innerText="ERROR";
-    exp="";
+function func(f) {
+  expr += f + "(";
+  update();
+}
+
+function backspace() {
+  expr = expr.slice(0, -1);
+  update();
+}
+
+function clearAll() {
+  expr = "";
+  update();
+}
+
+function toggleMode() {
+  deg = !deg;
+  modeText.textContent = deg ? "DEG" : "RAD";
+}
+
+function toRad(x) {
+  return deg ? x * Math.PI / 180 : x;
+}
+
+function calculate() {
+  if (!expr) return;
+
+  try {
+    let e = expr
+      .replace(/sin\(/g, "Math.sin(toRad(")
+      .replace(/cos\(/g, "Math.cos(toRad(")
+      .replace(/tan\(/g, "Math.tan(toRad(");
+
+    let result = Function("toRad", "return " + e)(toRad);
+    result = Number(result.toPrecision(12));
+
+    history.unshift(expr + " = " + result);
+    if (history.length > 10) history.pop();
+
+    expr = String(result);
+    update();
+    renderHistory();
+
+  } catch {
+    expr = "Error";
+    update();
+    expr = "";
   }
+}
+
+function renderHistory() {
+  historyBox.innerHTML = "";
+  history.forEach(h => {
+    let d = document.createElement("div");
+    d.textContent = h;
+    d.onclick = () => {
+      expr = h.split("=")[0].trim();
+      update();
+    };
+    historyBox.appendChild(d);
+  });
 }
 </script>
 </body>
