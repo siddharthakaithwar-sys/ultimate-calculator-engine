@@ -1,93 +1,130 @@
-let expr = "";
-let deg = true;
+const screen = document.getElementById("screen");
+const modeText = document.getElementById("mode");
+const historyList = document.getElementById("historyList");
 
-const display = document.getElementById("display");
-const mode = document.getElementById("mode");
-const historyBox = document.getElementById("history");
+let expression = "";
+let isDeg = true;
 
-function update(v) {
-  display.textContent = v;
-}
+// ---------- INPUT ----------
+document.querySelector(".keys").addEventListener("click", e => {
+  if (!e.target.matches("button")) return;
 
-function press(v) {
-  expr += v;
-  update(expr);
-}
+  const val = e.target.dataset.value;
+  const fn = e.target.dataset.fn;
+  const act = e.target.dataset.action;
 
-function backspace() {
-  expr = expr.slice(0, -1);
-  update(expr || "0");
-}
+  if (val) append(val);
+  if (fn) applyTrig(fn);
+  if (act) handleAction(act);
+});
 
-function clearAll() {
-  expr = "";
-  update("0");
-}
-
-function toggleDeg() {
-  deg = !deg;
-  mode.textContent = deg ? "DEG" : "RAD";
-}
-
-function func(f) {
-  expr += f + "(";
-  update(expr);
-}
-
-function normalize(e) {
-  return e.replace(/×/g, "*").replace(/÷/g, "/");
-}
-
-function handlePercent(e) {
-  e = e.replace(/(\d+(\.\d+)?)%(\d+(\.\d+)?)/g, "($1/$3)");
-  e = e.replace(/(\d+(\.\d+)?)%/g, "($1/100)");
-  return e;
-}
-
-function evalFloat(e) {
-  e = normalize(handlePercent(e));
-
-  e = e.replace(/sin\(/g, "Math.sin(")
-       .replace(/cos\(/g, "Math.cos(")
-       .replace(/tan\(/g, "Math.tan(");
-
-  if (deg) {
-    e = e.replace(/Math\.(sin|cos|tan)\(([^)]+)\)/g,
-      (_, f, v) => `Math.${f}(${v}*Math.PI/180)`
-    );
+// ---------- ACTIONS ----------
+function handleAction(act) {
+  if (act === "clear") {
+    expression = "";
+    update("0");
   }
 
-  return Number(eval(e).toFixed(12)).toString();
+  if (act === "back") {
+    expression = expression.slice(0, -1);
+    update(expression || "0");
+  }
+
+  if (act === "toggle") {
+    isDeg = !isDeg;
+    modeText.textContent = isDeg ? "DEG" : "RAD";
+  }
+
+  if (act === "percent") {
+    handlePercent();
+  }
+
+  if (act === "equals") {
+    calculate();
+  }
 }
 
-function evalBig(e) {
-  e = normalize(e);
-  e = e.replace(/(\d+)\^(\d+)/g, "($1n**$2n)");
-  e = e.replace(/\b\d+\b/g, m => m + "n");
-  return eval(e).toString();
+// ---------- CORE ----------
+function append(v) {
+  expression += v;
+  update(expression);
+}
+
+function update(v) {
+  screen.textContent = v;
+}
+
+// ---------- PERCENT LOGIC ----------
+function handlePercent() {
+  const match = expression.match(/(\d+\.?\d*)$/);
+  if (!match) return;
+
+  const number = parseFloat(match[1]);
+  const before = expression.slice(0, -match[1].length);
+
+  let base = 0;
+  const baseMatch = before.match(/(\d+\.?\d*)(?=[+\-*\/])$/);
+
+  if (baseMatch) base = parseFloat(baseMatch[1]);
+
+  const percentValue = base
+    ? (base * number) / 100
+    : number / 100;
+
+  expression = before + percentValue;
+  update(expression);
+}
+
+// ---------- TRIG ----------
+function applyTrig(fn) {
+  if (!expression) return;
+
+  let value = evaluate(expression);
+  if (isNaN(value)) return error();
+
+  let rad = isDeg ? value * Math.PI / 180 : value;
+
+  let result =
+    fn === "sin" ? Math.sin(rad) :
+    fn === "cos" ? Math.cos(rad) :
+    Math.tan(rad);
+
+  saveHistory(`${fn}(${value}) = ${result}`);
+  expression = result.toString();
+  update(expression);
+}
+
+// ---------- EVALUATE ----------
+function evaluate(exp) {
+  try {
+    exp = exp.replace(/\^/g, "**");
+    return Function(`return (${exp})`)();
+  } catch {
+    return NaN;
+  }
 }
 
 function calculate() {
-  try {
-    const result =
-      /sin|cos|tan|%|\.|\//.test(expr)
-        ? evalFloat(expr)
-        : evalBig(expr);
+  const result = evaluate(expression);
+  if (isNaN(result)) return error();
 
-    addHistory(expr, result);
-    expr = result;
-    update(result);
-  } catch {
-    update("Error");
-  }
+  saveHistory(`${expression} = ${result}`);
+  expression = result.toString();
+  update(expression);
 }
 
-function addHistory(e, r) {
-  const d = document.createElement("div");
-  d.textContent = `${e} = ${r}`;
-  historyBox.prepend(d);
+function error() {
+  update("Error");
+  expression = "";
 }
 
-function clearHistory() {
-  historyBox.innerHTML = "";
+// ---------- HISTORY ----------
+function saveHistory(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  historyList.prepend(div);
 }
+
+document.getElementById("clearHistory").onclick = () => {
+  historyList.innerHTML = "";
+};
