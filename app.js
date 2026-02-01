@@ -10,7 +10,7 @@ function updateDisplay(v = "0") {
   display.innerText = v;
 }
 
-/* ---------- BUTTON HANDLER ---------- */
+/* ---------- BUTTON EVENTS ---------- */
 buttons.forEach(btn => {
   btn.addEventListener("click", () => {
     const val = btn.dataset.value;
@@ -23,20 +23,27 @@ buttons.forEach(btn => {
   });
 });
 
+/* ---------- ACTIONS ---------- */
 function handleAction(action) {
-  if (action === "clear") {
-    expr = "";
-    updateDisplay();
-  }
+  switch (action) {
+    case "clear":
+      expr = "";
+      updateDisplay();
+      break;
 
-  if (action === "deg") {
-    isDeg = !isDeg;
-    document.getElementById("mode").innerText = isDeg ? "DEG" : "RAD";
-  }
+    case "deg":
+      isDeg = !isDeg;
+      document.getElementById("mode").innerText = isDeg ? "DEG" : "RAD";
+      break;
 
-  if (action === "percent") {
-    expr += "/100";
-    updateDisplay(expr);
+    case "backspace":
+      expr = expr.slice(0, -1);
+      updateDisplay(expr || "0");
+      break;
+
+    case "percent":
+      applyPercent();
+      break;
   }
 }
 
@@ -47,6 +54,29 @@ function press(v) {
   updateDisplay(expr);
 }
 
+/* ---------- % LOGIC (REAL CALCULATOR) ---------- */
+function applyPercent() {
+  try {
+    const match = expr.match(/(.+?)([\+\-\*\/])(.+)$/);
+
+    if (match) {
+      const a = parseFloat(match[1]);
+      const op = match[2];
+      const b = parseFloat(match[3]);
+
+      const percentValue = (a * b) / 100;
+      expr = a + op + percentValue;
+    } else {
+      expr = (parseFloat(expr) / 100).toString();
+    }
+
+    updateDisplay(expr);
+  } catch {
+    expr = "Error";
+    updateDisplay("Error");
+  }
+}
+
 /* ---------- CALCULATE ---------- */
 document.getElementById("equals").addEventListener("click", () => {
   try {
@@ -54,9 +84,9 @@ document.getElementById("equals").addEventListener("click", () => {
 
     if (isDeg) {
       e = e
-        .replace(/sin\(([^)]+)\)/g, (_, a) => `Math.sin(${a}*Math.PI/180)`)
-        .replace(/cos\(([^)]+)\)/g, (_, a) => `Math.cos(${a}*Math.PI/180)`)
-        .replace(/tan\(([^)]+)\)/g, (_, a) => `Math.tan(${a}*Math.PI/180)`);
+        .replace(/sin([^)]+)/g, (_, a) => `Math.sin(${a}*Math.PI/180)`)
+        .replace(/cos([^)]+)/g, (_, a) => `Math.cos(${a}*Math.PI/180)`)
+        .replace(/tan([^)]+)/g, (_, a) => `Math.tan(${a}*Math.PI/180)`);
     }
 
     let result = Function(`return (${e})`)();
