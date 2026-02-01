@@ -1,88 +1,106 @@
-* {
-  box-sizing: border-box;
-  font-family: system-ui, sans-serif;
+const screen = document.getElementById("screen");
+const modeText = document.getElementById("mode");
+const historyList = document.getElementById("historyList");
+
+let exp = "";
+let deg = true;
+
+// ---------------- UI ----------------
+document.querySelector(".keys").addEventListener("click", e => {
+  const b = e.target;
+  if (!b.dataset) return;
+
+  if (b.dataset.val) add(b.dataset.val);
+  if (b.dataset.fn) trig(b.dataset.fn);
+  if (b.dataset.act) action(b.dataset.act);
+});
+
+function update(v) {
+  screen.textContent = v || "0";
 }
 
-body {
-  background: #0b1220;
-  display: flex;
-  justify-content: center;
-  padding: 20px;
+// ---------------- BASIC ----------------
+function add(v) {
+  exp += v;
+  update(exp);
 }
 
-.calculator {
-  width: 360px;
-  background: #0f1b2e;
-  border-radius: 20px;
-  padding: 16px;
+function action(a) {
+  if (a === "clear") {
+    exp = "";
+    update("0");
+  }
+
+  if (a === "back") {
+    exp = exp.slice(0, -1);
+    update(exp);
+  }
+
+  if (a === "mode") {
+    deg = !deg;
+    modeText.textContent = deg ? "DEG" : "RAD";
+  }
+
+  if (a === "equal") calculate();
+  if (a === "percent") percent();
+  if (a === "power") exp += "^";
 }
 
-.display {
-  background: #020617;
-  color: white;
-  padding: 16px;
-  border-radius: 14px;
-  text-align: right;
-  margin-bottom: 12px;
+// ---------------- PERCENT (ANDROID LOGIC) ----------------
+function percent() {
+  const m = exp.match(/(\d+\.?\d*)$/);
+  if (!m) return;
+
+  const num = parseFloat(m[1]);
+  const left = exp.slice(0, -m[1].length);
+
+  let baseMatch = left.match(/(\d+\.?\d*)(?=[+\-*\/])$/);
+  let base = baseMatch ? parseFloat(baseMatch[1]) : 0;
+
+  let result = base ? (base * num) / 100 : num / 100;
+  exp = left + result;
+  update(exp);
 }
 
-#mode {
-  font-size: 12px;
-  opacity: 0.7;
+// ---------------- TRIG ----------------
+function trig(fn) {
+  const m = exp.match(/(\d+\.?\d*)$/);
+  if (!m) return;
+
+  const num = parseFloat(m[1]);
+  let rad = deg ? num * Math.PI / 180 : num;
+
+  let res =
+    fn === "sin" ? Math.sin(rad) :
+    fn === "cos" ? Math.cos(rad) :
+    Math.tan(rad);
+
+  exp = exp.slice(0, -m[1].length) + res;
+  update(exp);
+  save(`${fn}(${num}) = ${res}`);
 }
 
-#screen {
-  font-size: 28px;
-  word-wrap: break-word;
+// ---------------- POWER + CALC ----------------
+function calculate() {
+  try {
+    let jsExp = exp.replace(/\^/g, "**");
+    let result = Function("return " + jsExp)();
+    save(`${exp} = ${result}`);
+    exp = result.toString();
+    update(exp);
+  } catch {
+    update("Error");
+    exp = "";
+  }
 }
 
-.keys {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+// ---------------- HISTORY ----------------
+function save(t) {
+  const d = document.createElement("div");
+  d.textContent = t;
+  historyList.prepend(d);
 }
 
-button {
-  padding: 14px;
-  border-radius: 14px;
-  border: none;
-  font-size: 16px;
-  background: #1e293b;
-  color: white;
-  cursor: pointer;
-}
-
-button:active {
-  transform: scale(0.96);
-}
-
-.red {
-  background: #ef4444;
-}
-
-.equals {
-  grid-column: span 4;
-  background: #22c55e;
-  font-size: 22px;
-}
-
-.history {
-  margin-top: 12px;
-  background: #020617;
-  color: white;
-  border-radius: 14px;
-  padding: 10px;
-}
-
-.history .row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#historyList {
-  font-size: 14px;
-  margin-top: 8px;
-  max-height: 120px;
-  overflow-y: auto;
-}
+document.getElementById("clearHistory").onclick = () => {
+  historyList.innerHTML = "";
+};
