@@ -5,20 +5,45 @@ const historyEl = document.getElementById("history");
 let expression = "";
 let mode = "DEG";
 
-function updateScreen() {
-  screen.textContent = expression || "0";
+function updateScreen(val = expression) {
+  screen.textContent = val || "0";
 }
 
+/* ---------- NUMBER FORMATTER ---------- */
+function formatNumber(num) {
+  if (!isFinite(num)) return "Error";
+
+  // prevent scientific notation
+  let str = num.toString();
+
+  if (str.includes("e")) {
+    const [base, exp] = str.split("e");
+    const decimals = Math.max(0, Math.abs(+exp));
+    str = Number(num).toFixed(decimals).replace(/\.?0+$/, "");
+  }
+
+  // trim long decimals
+  if (str.includes(".")) {
+    const [i, d] = str.split(".");
+    str = i + "." + d.slice(0, 12);
+  }
+
+  return str;
+}
+
+/* ---------- HISTORY ---------- */
 function addHistory(text) {
   const div = document.createElement("div");
   div.textContent = text;
   historyEl.prepend(div);
 }
 
+/* ---------- TRIG ---------- */
 function toRadians(x) {
   return x * Math.PI / 180;
 }
 
+/* ---------- NORMALIZE ---------- */
 function normalize(expr) {
   return expr
     .replace(/×/g, "*")
@@ -39,8 +64,7 @@ function evaluate(expr) {
   return Function("toRadians", `return ${normalize(expr)}`)(toRadians);
 }
 
-/* ---------- BUTTON HANDLER ---------- */
-
+/* ---------- BUTTONS ---------- */
 document.querySelector(".keys").addEventListener("click", (e) => {
   const btn = e.target;
   if (btn.tagName !== "BUTTON") return;
@@ -49,21 +73,18 @@ document.querySelector(".keys").addEventListener("click", (e) => {
   const act = btn.dataset.action;
   const fn = btn.dataset.fn;
 
-  /* VALUES */
   if (v) {
     expression += v;
     updateScreen();
     return;
   }
 
-  /* FUNCTIONS */
   if (fn) {
     expression += fn + "(";
     updateScreen();
     return;
   }
 
-  /* ACTIONS */
   switch (act) {
     case "clear":
       expression = "";
@@ -82,31 +103,36 @@ document.querySelector(".keys").addEventListener("click", (e) => {
 
     case "percent":
       try {
-        // extract last number
         const match = expression.match(/(\d+(\.\d+)?)$/);
         if (!match) return;
 
-        const num = parseFloat(match[1]);
-        const percentValue = num / 100;
-
+        const num = parseFloat(match[1]) / 100;
         expression =
-          expression.slice(0, -match[1].length) + percentValue;
+          expression.slice(0, -match[1].length) + formatNumber(num);
 
         updateScreen();
       } catch {
-        screen.textContent = "Error";
+        updateScreen("Error");
         expression = "";
       }
       break;
 
     case "equals":
       try {
-        const result = evaluate(expression);
+        const raw = evaluate(expression);
+        const result = formatNumber(raw);
+
+        if (result === "Error") {
+          updateScreen("Error");
+          expression = "";
+          return;
+        }
+
         addHistory(`${expression} = ${result}`);
-        expression = result.toString();
+        expression = result;
         updateScreen();
       } catch {
-        screen.textContent = "Error";
+        updateScreen("Error");
         expression = "";
       }
       break;
