@@ -1,130 +1,98 @@
 const screen = document.getElementById("screen");
-const modeText = document.getElementById("mode");
-const historyList = document.getElementById("historyList");
+const modeEl = document.getElementById("mode");
+const historyEl = document.getElementById("history");
 
 let expression = "";
-let isDeg = true;
+let mode = "DEG";
 
-// ---------- INPUT ----------
-document.querySelector(".keys").addEventListener("click", e => {
-  if (!e.target.matches("button")) return;
-
-  const val = e.target.dataset.value;
-  const fn = e.target.dataset.fn;
-  const act = e.target.dataset.action;
-
-  if (val) append(val);
-  if (fn) applyTrig(fn);
-  if (act) handleAction(act);
-});
-
-// ---------- ACTIONS ----------
-function handleAction(act) {
-  if (act === "clear") {
-    expression = "";
-    update("0");
-  }
-
-  if (act === "back") {
-    expression = expression.slice(0, -1);
-    update(expression || "0");
-  }
-
-  if (act === "toggle") {
-    isDeg = !isDeg;
-    modeText.textContent = isDeg ? "DEG" : "RAD";
-  }
-
-  if (act === "percent") {
-    handlePercent();
-  }
-
-  if (act === "equals") {
-    calculate();
-  }
+function updateScreen() {
+  screen.textContent = expression || "0";
 }
 
-// ---------- CORE ----------
-function append(v) {
-  expression += v;
-  update(expression);
-}
-
-function update(v) {
-  screen.textContent = v;
-}
-
-// ---------- PERCENT LOGIC ----------
-function handlePercent() {
-  const match = expression.match(/(\d+\.?\d*)$/);
-  if (!match) return;
-
-  const number = parseFloat(match[1]);
-  const before = expression.slice(0, -match[1].length);
-
-  let base = 0;
-  const baseMatch = before.match(/(\d+\.?\d*)(?=[+\-*\/])$/);
-
-  if (baseMatch) base = parseFloat(baseMatch[1]);
-
-  const percentValue = base
-    ? (base * number) / 100
-    : number / 100;
-
-  expression = before + percentValue;
-  update(expression);
-}
-
-// ---------- TRIG ----------
-function applyTrig(fn) {
-  if (!expression) return;
-
-  let value = evaluate(expression);
-  if (isNaN(value)) return error();
-
-  let rad = isDeg ? value * Math.PI / 180 : value;
-
-  let result =
-    fn === "sin" ? Math.sin(rad) :
-    fn === "cos" ? Math.cos(rad) :
-    Math.tan(rad);
-
-  saveHistory(`${fn}(${value}) = ${result}`);
-  expression = result.toString();
-  update(expression);
-}
-
-// ---------- EVALUATE ----------
-function evaluate(exp) {
-  try {
-    exp = exp.replace(/\^/g, "**");
-    return Function(`return (${exp})`)();
-  } catch {
-    return NaN;
-  }
-}
-
-function calculate() {
-  const result = evaluate(expression);
-  if (isNaN(result)) return error();
-
-  saveHistory(`${expression} = ${result}`);
-  expression = result.toString();
-  update(expression);
-}
-
-function error() {
-  update("Error");
-  expression = "";
-}
-
-// ---------- HISTORY ----------
-function saveHistory(text) {
+function addHistory(entry) {
   const div = document.createElement("div");
-  div.textContent = text;
-  historyList.prepend(div);
+  div.textContent = entry;
+  historyEl.prepend(div);
 }
 
-document.getElementById("clearHistory").onclick = () => {
-  historyList.innerHTML = "";
-};
+function toRadians(x) {
+  return x * Math.PI / 180;
+}
+
+function evaluateExpression(expr) {
+  let e = expr
+    .replace(/÷/g, "/")
+    .replace(/×/g, "*")
+    .replace(/\^/g, "**")
+    .replace(/sin\(([^)]+)\)/g, (_, x) =>
+      `Math.sin(${mode === "DEG" ? "toRadians(" + x + ")" : x})`
+    )
+    .replace(/cos\(([^)]+)\)/g, (_, x) =>
+      `Math.cos(${mode === "DEG" ? "toRadians(" + x + ")" : x})`
+    )
+    .replace(/tan\(([^)]+)\)/g, (_, x) =>
+      `Math.tan(${mode === "DEG" ? "toRadians(" + x + ")" : x})`
+    );
+
+  return Function("toRadians", `return ${e}`)(toRadians);
+}
+
+document.querySelector(".keys").addEventListener("click", (e) => {
+  const btn = e.target;
+  if (!btn.tagName === "BUTTON") return;
+
+  const value = btn.dataset.value;
+  const action = btn.dataset.action;
+  const fn = btn.dataset.fn;
+
+  if (value) {
+    expression += value;
+    updateScreen();
+  }
+
+  if (fn) {
+    expression += `${fn}(`;
+    updateScreen();
+  }
+
+  if (action === "clear") {
+    expression = "";
+    updateScreen();
+  }
+
+  if (action === "backspace") {
+    expression = expression.slice(0, -1);
+    updateScreen();
+  }
+
+  if (action === "toggle-mode") {
+    mode = mode === "DEG" ? "RAD" : "DEG";
+    modeEl.textContent = mode;
+  }
+
+  if (action === "percent") {
+    try {
+      const val = evaluateExpression(expression);
+      expression = (val / 100).toString();
+      updateScreen();
+    } catch {
+      screen.textContent = "Error";
+    }
+  }
+
+  if (action === "equals") {
+    try {
+      const result = evaluateExpression(expression);
+      addHistory(`${expression} = ${result}`);
+      expression = result.toString();
+      updateScreen();
+    } catch {
+      screen.textContent = "Error";
+      expression = "";
+    }
+  }
+
+  if (action === "clear-history") {
+    historyEl.innerHTML = "";
+  }
+});
