@@ -10,52 +10,52 @@
 
 <div class="calculator">
 
-  <div class="display-box">
-    <span id="mode">DEG</span>
-    <div id="display">0</div>
+  <div class="display">
+    <div id="mode">DEG</div>
+    <div id="screen">0</div>
   </div>
 
-  <div class="buttons">
-    <button class="danger" onclick="clearAll()">C</button>
-    <button onclick="toggleDeg()">DEG</button>
-    <button onclick="press('(')">(</button>
-    <button onclick="press(')')">)</button>
+  <div class="keys">
+    <button data-action="clear" class="red">C</button>
+    <button data-action="toggle">DEG</button>
+    <button data-value="(">(</button>
+    <button data-value=")">)</button>
 
-    <button onclick="func('sin')">sin</button>
-    <button onclick="func('cos')">cos</button>
-    <button onclick="func('tan')">tan</button>
-    <button onclick="press('/')">÷</button>
+    <button data-fn="sin">sin</button>
+    <button data-fn="cos">cos</button>
+    <button data-fn="tan">tan</button>
+    <button data-value="/">÷</button>
 
-    <button onclick="press('7')">7</button>
-    <button onclick="press('8')">8</button>
-    <button onclick="press('9')">9</button>
-    <button onclick="press('*')">×</button>
+    <button data-value="7">7</button>
+    <button data-value="8">8</button>
+    <button data-value="9">9</button>
+    <button data-value="*">×</button>
 
-    <button onclick="press('4')">4</button>
-    <button onclick="press('5')">5</button>
-    <button onclick="press('6')">6</button>
-    <button onclick="press('-')">−</button>
+    <button data-value="4">4</button>
+    <button data-value="5">5</button>
+    <button data-value="6">6</button>
+    <button data-value="-">−</button>
 
-    <button onclick="press('1')">1</button>
-    <button onclick="press('2')">2</button>
-    <button onclick="press('3')">3</button>
-    <button onclick="press('+')">+</button>
+    <button data-value="1">1</button>
+    <button data-value="2">2</button>
+    <button data-value="3">3</button>
+    <button data-value="+">+</button>
 
-    <button onclick="press('0')">0</button>
-    <button onclick="press('.')">.</button>
-    <button onclick="backspace()">⌫</button>
-    <button onclick="press('%')">%</button>
+    <button data-value="0">0</button>
+    <button data-value=".">.</button>
+    <button data-action="back">⌫</button>
+    <button data-action="percent">%</button>
 
-    <button onclick="press('^')">^</button>
-    <button class="equals" onclick="calculate()">=</button>
+    <button data-value="^">^</button>
+    <button data-action="equals" class="equals">=</button>
   </div>
 
-  <div class="history-box">
-    <div class="history-header">
+  <div class="history">
+    <div class="row">
       <span>History</span>
-      <button onclick="clearHistory()">Clear</button>
+      <button id="clearHistory" class="red">Clear</button>
     </div>
-    <div id="history"></div>
+    <div id="historyList"></div>
   </div>
 
 </div>
