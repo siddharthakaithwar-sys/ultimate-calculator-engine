@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ultimate Calculator</title>
-
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <div class="calculator">
+
   <div class="top">
-    <span id="mode">DEG</span>
+    <span id="mode">RAD</span>
     <div id="display">0</div>
   </div>
 
@@ -46,6 +46,16 @@
     <button onclick="backspace()">⌫</button>
     <button class="equals" onclick="calculate()">=</button>
   </div>
+
+  <!-- HISTORY -->
+  <div class="history">
+    <div class="history-header">
+      <span>History</span>
+      <button onclick="clearHistory()">Clear</button>
+    </div>
+    <ul id="historyList"></ul>
+  </div>
+
 </div>
 
 <script src="app.js"></script>
