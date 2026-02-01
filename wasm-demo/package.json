@@ -1,0 +1,15 @@
+{
+  "name": "ultimate_calculator_engine",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "ultimate_calculator_engine_bg.wasm",
+    "ultimate_calculator_engine.js",
+    "ultimate_calculator_engine.d.ts"
+  ],
+  "main": "ultimate_calculator_engine.js",
+  "types": "ultimate_calculator_engine.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
