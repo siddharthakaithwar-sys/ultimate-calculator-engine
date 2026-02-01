@@ -1,65 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ultimate Calculator</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Calculator</title>
 
-<div class="calculator">
+<style>
+/* ⚠️ UI UNCHANGED – do not touch */
+body {
+  margin: 0;
+  background: #050b17;
+  font-family: system-ui, sans-serif;
+  color: white;
+}
+
+.app {
+  max-width: 420px;
+  margin: auto;
+  padding: 16px;
+}
+
+.display {
+  background: linear-gradient(145deg, #020814, #071a3a);
+  border-radius: 20px;
+  padding: 20px;
+  font-size: 36px;
+  text-align: right;
+  overflow-x: auto;
+}
+
+.mode {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+button {
+  background: #1a2a45;
+  border: none;
+  border-radius: 14px;
+  padding: 18px;
+  font-size: 20px;
+  color: white;
+}
+
+button.op { background: #2b3e63; }
+button.func { background: #4ea3ff; color: black; }
+button.red { background: #ff5b5b; }
+button.green {
+  background: #41d07c;
+  grid-column: span 3;
+}
+
+.history {
+  margin-top: 20px;
+  background: #020814;
+  border-radius: 16px;
+  padding: 14px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.history button {
+  background: #ff5b5b;
+  font-size: 14px;
+  padding: 6px 12px;
+}
+
+.entry {
+  font-size: 14px;
+  opacity: 0.8;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
 
   <div class="display">
     <div class="mode" id="mode">DEG</div>
-    <div class="screen" id="screen">0</div>
+    <div id="screen">0</div>
   </div>
 
-  <div class="keys">
-    <button data-action="clear" class="danger">C</button>
-    <button data-action="toggle-mode">DEG</button>
-    <button data-value="(">(</button>
-    <button data-value=")">)</button>
+  <div class="buttons">
+    <button class="red">C</button>
+    <button class="op">DEG</button>
+    <button class="op">(</button>
+    <button class="op">)</button>
 
-    <button data-fn="sin">sin</button>
-    <button data-fn="cos">cos</button>
-    <button data-fn="tan">tan</button>
-    <button data-value="/">÷</button>
+    <button class="func">sin</button>
+    <button class="func">cos</button>
+    <button class="func">tan</button>
+    <button class="op">÷</button>
 
-    <button data-value="7">7</button>
-    <button data-value="8">8</button>
-    <button data-value="9">9</button>
-    <button data-value="*">×</button>
+    <button>7</button><button>8</button><button>9</button><button class="op">×</button>
+    <button>4</button><button>5</button><button>6</button><button class="op">−</button>
+    <button>1</button><button>2</button><button>3</button><button class="op">+</button>
+    <button>0</button><button>.</button><button>⌫</button><button class="op">%</button>
 
-    <button data-value="4">4</button>
-    <button data-value="5">5</button>
-    <button data-value="6">6</button>
-    <button data-value="-">−</button>
-
-    <button data-value="1">1</button>
-    <button data-value="2">2</button>
-    <button data-value="3">3</button>
-    <button data-value="+">+</button>
-
-    <button data-value="0">0</button>
-    <button data-value=".">.</button>
-    <button data-action="backspace">⌫</button>
-    <button data-action="percent">%</button>
-
-    <button data-value="^">^</button>
-    <button class="equals" data-action="equals">=</button>
+    <button class="op">^</button>
+    <button class="green">=</button>
   </div>
 
   <div class="history">
     <div class="history-header">
-      <span>History</span>
-      <button data-action="clear-history" class="danger small">Clear</button>
+      <strong>History</strong>
+      <button id="clearHistory">Clear</button>
     </div>
-    <div id="history"></div>
+    <div id="historyList"></div>
   </div>
 
 </div>
 
-<script src="app.js"></script>
+<script>
+let expr = "";
+let deg = true;
+let history = [];
+
+const screen = document.getElementById("screen");
+const mode = document.getElementById("mode");
+const historyList = document.getElementById("historyList");
+
+function update() {
+  screen.textContent = expr || "0";
+}
+
+function toRad(x) {
+  return deg ? x * Math.PI / 180 : x;
+}
+
+function format(n) {
+  if (!isFinite(n)) return "Error";
+  let s = n.toString();
+  if (s.includes("e")) {
+    return n.toFixed(12).replace(/\.?0+$/, "");
+  }
+  return s;
+}
+
+function evaluateExpression(input) {
+  let s = input
+    .replace(/×/g, "*")
+    .replace(/÷/g, "/")
+    .replace(/−/g, "-")
+    .replace(/(\d+(\.\d+)?)%/g, "($1/100)")
+    .replace(/(\d+)\^(\d+)/g, "Math.pow($1,$2)")
+    .replace(/sin\(([^)]+)\)/g, "Math.sin(toRad($1))")
+    .replace(/cos\(([^)]+)\)/g, "Math.cos(toRad($1))")
+    .replace(/tan\(([^)]+)\)/g, "Math.tan(toRad($1))");
+
+  return Function("toRad", `"use strict"; return (${s})`)(toRad);
+}
+
+document.querySelectorAll(".buttons button").forEach(btn => {
+  btn.onclick = () => {
+    const t = btn.textContent;
+
+    if (t === "C") { expr = ""; update(); return; }
+    if (t === "⌫") { expr = expr.slice(0, -1); update(); return; }
+
+    if (t === "DEG") {
+      deg = !deg;
+      mode.textContent = deg ? "DEG" : "RAD";
+      return;
+    }
+
+    if (t === "=") {
+      try {
+        const result = format(evaluateExpression(expr));
+        history.unshift(`${expr} = ${result}`);
+        if (history.length > 30) history.pop();
+        expr = result;
+        renderHistory();
+      } catch {
+        expr = "Error";
+      }
+      update();
+      return;
+    }
+
+    if (["sin","cos","tan"].includes(t)) {
+      expr += t + "(";
+      update();
+      return;
+    }
+
+    expr += t;
+    update();
+  };
+});
+
+document.getElementById("clearHistory").onclick = () => {
+  history = [];
+  renderHistory();
+};
+
+function renderHistory() {
+  historyList.innerHTML = history.map(h => `<div class="entry">${h}</div>`).join("");
+}
+
+update();
+</script>
 </body>
 </html>
