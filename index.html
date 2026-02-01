@@ -1,60 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ultimate Calculator (WASM)</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ultimate Calculator</title>
 
 <style>
+*{box-sizing:border-box;font-family:system-ui}
 body{
-  margin:0;
-  background:linear-gradient(180deg,#020617,#0b1324);
-  height:100vh;
+  background:#0b1220;
   display:flex;
   justify-content:center;
   align-items:center;
-  font-family:system-ui;
-  color:white;
+  min-height:100vh;
+  margin:0;
 }
 .calc{
   width:340px;
-  background:#0b1324;
-  border-radius:22px;
+  background:#111a2e;
+  border-radius:24px;
   padding:16px;
-  box-shadow:0 40px 80px rgba(0,0,0,.7);
+  box-shadow:0 20px 40px rgba(0,0,0,.6);
 }
 .display{
-  background:#020617;
-  border-radius:14px;
+  height:70px;
+  background:#060b18;
+  color:#fff;
+  border-radius:16px;
   padding:16px;
   font-size:28px;
   text-align:right;
-  min-height:64px;
-  overflow-wrap:anywhere;
+  overflow-x:auto;
 }
-.grid{
-  margin-top:16px;
+.keys{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:12px;
+  margin-top:16px;
 }
 button{
-  height:58px;
+  height:56px;
   border:none;
   border-radius:50%;
-  font-size:18px;
-  color:white;
-  background:#1e293b;
+  font-size:20px;
+  background:#1c263d;
+  color:#fff;
 }
-button.op{background:#334155}
-button.equal{
-  background:#22c55e;
-  color:black;
-  grid-row:span 2;
-  border-radius:30px;
-}
-button.clear{background:#ef4444}
-button:active{transform:scale(.95)}
+button.op{background:#263252}
+button.eq{background:#1fbf63;color:#000}
+button.clear{background:#e94444}
+button:active{transform:scale(.96)}
 </style>
 </head>
 
@@ -62,77 +57,73 @@ button:active{transform:scale(.95)}
 <div class="calc">
   <div id="display" class="display">0</div>
 
-  <div class="grid">
-    <button class="clear" data-act="clear">C</button>
-    <button data-val="(">(</button>
-    <button data-val=")">)</button>
-    <button class="op" data-val="/">÷</button>
+  <div class="keys">
+    <button class="clear" onclick="clearAll()">C</button>
+    <button onclick="input('(')">(</button>
+    <button onclick="input(')')">)</button>
+    <button class="op" onclick="input('/')">÷</button>
 
-    <button data-val="7">7</button>
-    <button data-val="8">8</button>
-    <button data-val="9">9</button>
-    <button class="op" data-val="*">×</button>
+    <button onclick="input('7')">7</button>
+    <button onclick="input('8')">8</button>
+    <button onclick="input('9')">9</button>
+    <button class="op" onclick="input('*')">×</button>
 
-    <button data-val="4">4</button>
-    <button data-val="5">5</button>
-    <button data-val="6">6</button>
-    <button class="op" data-val="-">−</button>
+    <button onclick="input('4')">4</button>
+    <button onclick="input('5')">5</button>
+    <button onclick="input('6')">6</button>
+    <button class="op" onclick="input('-')">−</button>
 
-    <button data-val="1">1</button>
-    <button data-val="2">2</button>
-    <button data-val="3">3</button>
-    <button class="op" data-val="+">+</button>
+    <button onclick="input('1')">1</button>
+    <button onclick="input('2')">2</button>
+    <button onclick="input('3')">3</button>
+    <button class="op" onclick="input('+')">+</button>
 
-    <button data-val="0">0</button>
-    <button data-val=".">.</button>
-    <button data-val="%">%</button>
-    <button class="equal" data-act="eval">=</button>
-
-    <button data-val="^">^</button>
-    <button data-act="back">⌫</button>
+    <button onclick="input('0')">0</button>
+    <button onclick="input('.')">.</button>
+    <button onclick="input('^')">^</button>
+    <button class="eq" onclick="calculate()">=</button>
   </div>
 </div>
 
-<script type="module">
-import init, { evaluate } from "./ultimate_calculator_engine.js";
+<script>
+let expr = "";
 
 const display = document.getElementById("display");
-let expr = "0";
 
-function render(){ display.textContent = expr; }
-
-function add(v){
-  if(expr==="0") expr=v;
-  else expr+=v;
-  render();
+function input(v){
+  if(display.innerText==="0") expr="";
+  expr += v;
+  display.innerText = expr;
 }
 
-function clearAll(){ expr="0"; render(); }
-
-function back(){
-  expr = expr.length>1 ? expr.slice(0,-1) : "0";
-  render();
+function clearAll(){
+  expr="";
+  display.innerText="0";
 }
 
-async function run(){
+/* ---------- ENGINE ---------- */
+
+// power for BigInt
+function bigPow(a,b){
+  let r=1n;
+  for(let i=0n;i<b;i++) r*=a;
+  return r;
+}
+
+function calculate(){
   try{
-    expr = evaluate(expr).toString();
-    render();
-  }catch{
-    expr="Error";
-    render();
-    setTimeout(()=>{expr="0";render()},900);
+    let safe = expr
+      .replace(/(\d+)\^(\d+)/g,'bigPow($1n,$2n)')
+      .replace(/(\d+)/g,'$1n');
+
+    let result = eval(safe);
+    display.innerText = result.toString();
+    expr = result.toString();
+  }catch(e){
+    display.innerText="ERROR";
+    expr="";
   }
 }
-
-await init();
-
-document.querySelectorAll("button").forEach(b=>{
-  if(b.dataset.val) b.onclick=()=>add(b.dataset.val);
-  if(b.dataset.act==="clear") b.onclick=clearAll;
-  if(b.dataset.act==="back") b.onclick=back;
-  if(b.dataset.act==="eval") b.onclick=run;
-});
 </script>
 </body>
 </html>
