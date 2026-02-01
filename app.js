@@ -34,42 +34,32 @@ function func(f) {
   update(expr);
 }
 
-/* ---------- PERCENT ---------- */
-function applyPercent(e) {
-  return e
-    .replace(/(\d+)([\+\-])(\d+)%/g,
-      (_, a, op, p) => `${a}${op}(${a}*${p}/100)`
-    )
-    .replace(/(\d+)([×÷])(\d+)%/g,
-      (_, a, op, p) => `${a}${op}(${p}/100)`
-    )
-    .replace(/(\d+)%/g, "($1/100)");
+/* ---------- MODE DETECTION ---------- */
+function isFloatMode(e) {
+  return /[.%÷]|sin|cos|tan|\./.test(e);
 }
 
-/* ---------- FLOAT DETECT ---------- */
-function needsFloat(e) {
-  return /sin|cos|tan|\./.test(e);
+/* ---------- NORMALIZE ---------- */
+function normalize(e) {
+  return e.replace(/×/g, "*").replace(/÷/g, "/");
 }
 
-/* ---------- BIGINT ---------- */
-function evalBigInt(e) {
-  e = applyPercent(e)
-    .replace(/×/g, "*")
-    .replace(/÷/g, "/")
-    .replace(/(\d+)\^(\d+)/g, "($1n ** $2n)")
-    .replace(/(\d+)/g, "$1n");
-
-  return eval(e).toString();
+/* ---------- PERCENT (RATIO LOGIC) ---------- */
+function handlePercent(e) {
+  // A%B  => A / B
+  e = e.replace(/(\d+(?:\.\d+)?)%(\d+(?:\.\d+)?)/g, "($1/$2)");
+  // A% => A / 100
+  e = e.replace(/(\d+(?:\.\d+)?)%/g, "($1/100)");
+  return e;
 }
 
-/* ---------- FLOAT ---------- */
+/* ---------- FLOAT EVAL ---------- */
 function evalFloat(e) {
-  e = applyPercent(e)
-    .replace(/×/g, "*")
-    .replace(/÷/g, "/")
-    .replace(/sin\(/g, "Math.sin(")
-    .replace(/cos\(/g, "Math.cos(")
-    .replace(/tan\(/g, "Math.tan(");
+  e = normalize(handlePercent(e));
+
+  e = e.replace(/sin\(/g, "Math.sin(")
+       .replace(/cos\(/g, "Math.cos(")
+       .replace(/tan\(/g, "Math.tan(");
 
   if (deg) {
     e = e.replace(
@@ -81,10 +71,23 @@ function evalFloat(e) {
   return Number(eval(e).toFixed(12)).toString();
 }
 
+/* ---------- BIGINT EVAL ---------- */
+function evalBigInt(e) {
+  e = normalize(e);
+
+  // power first
+  e = e.replace(/(\d+)\^(\d+)/g, "($1n**$2n)");
+
+  // remaining numbers
+  e = e.replace(/\b\d+\b/g, m => m + "n");
+
+  return eval(e).toString();
+}
+
 /* ---------- CALCULATE ---------- */
 function calculate() {
   try {
-    let result = needsFloat(expr)
+    let result = isFloatMode(expr)
       ? evalFloat(expr)
       : evalBigInt(expr);
 
