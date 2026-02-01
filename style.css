@@ -1,32 +1,40 @@
+* {
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+}
+
 body {
-  background: radial-gradient(#0b1220, #020409);
-  font-family: system-ui;
+  margin: 0;
+  background: linear-gradient(180deg, #020617, #020617);
+  display: flex;
+  justify-content: center;
+  padding: 20px;
   color: white;
 }
 
 .calculator {
-  max-width: 360px;
-  margin: 30px auto;
-  background: #121c2d;
-  border-radius: 20px;
-  padding: 20px;
+  width: 360px;
+  background: #0b1220;
+  border-radius: 22px;
+  padding: 18px;
 }
 
 .display-box {
-  background: #020817;
-  padding: 15px;
-  border-radius: 15px;
-  margin-bottom: 15px;
+  background: #020617;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
 }
 
 #mode {
-  color: #6bbcff;
   font-size: 14px;
+  color: #60a5fa;
 }
 
 #display {
   font-size: 28px;
   word-wrap: break-word;
+  text-align: right;
 }
 
 .buttons {
@@ -36,50 +44,52 @@ body {
 }
 
 button {
-  padding: 15px;
-  border-radius: 15px;
+  padding: 14px;
+  border-radius: 14px;
   border: none;
-  background: #2b3b55;
+  background: #1e293b;
   color: white;
   font-size: 16px;
 }
 
-button.blue {
-  background: #4fa8f5;
-  color: #041625;
+button:active {
+  transform: scale(0.97);
 }
 
-button.danger {
-  background: #e84545;
+.danger {
+  background: #ef4444;
 }
 
-button.equals {
+.blue {
+  background: #3b82f6;
+}
+
+.equals {
   grid-column: span 4;
-  background: #2ecc71;
+  background: #22c55e;
   font-size: 20px;
 }
 
-.history {
-  margin-top: 15px;
-  background: #0b1425;
-  border-radius: 15px;
+.history-box {
+  margin-top: 16px;
+  background: #020617;
+  border-radius: 14px;
   padding: 10px;
 }
 
 .history-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 
-.history button {
-  background: #e84545;
-  padding: 5px 10px;
+.history-header button {
+  background: #ef4444;
+  padding: 4px 8px;
   font-size: 12px;
 }
 
 #history {
-  max-height: 120px;
-  overflow-y: auto;
   font-size: 13px;
+  color: #cbd5f5;
 }
