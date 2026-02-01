@@ -1,164 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ultimate Calculator (WASM)</title>
 
 <style>
-  * {
-    box-sizing: border-box;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  }
+* { box-sizing: border-box; }
 
-  body {
-    margin: 0;
-    background: #0b1220;
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
+body {
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: white;
+}
 
-  .calculator {
-    width: 100%;
-    max-width: 380px;
-    background: #0f172a;
-    border-radius: 22px;
-    padding: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.6);
-  }
+.calculator {
+  width: 100%;
+  max-width: 380px;
+  padding: 20px;
+  border-radius: 28px;
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 40px 80px rgba(0,0,0,.6);
+}
 
-  .display {
-    background: #020617;
-    border-radius: 14px;
-    padding: 16px;
-    font-size: 28px;
-    text-align: right;
-    min-height: 60px;
-    word-wrap: break-word;
-  }
+.display {
+  height: 72px;
+  background: #020617;
+  border-radius: 18px;
+  padding: 14px;
+  font-size: 32px;
+  text-align: right;
+  overflow-x: auto;
+  white-space: nowrap;
+}
 
-  .sub {
-    font-size: 14px;
-    opacity: .6;
-    margin-top: 6px;
-    text-align: right;
-  }
+.keys {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
 
-  .keys {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-top: 20px;
-  }
+button {
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  background: #1e293b;
+  color: white;
+  touch-action: manipulation;
+}
 
-  button {
-    height: 64px;
-    border-radius: 50%;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    background: #1e293b;
-    color: white;
-  }
+button:active { transform: scale(0.94); }
 
-  button.op {
-    background: #334155;
-  }
-
-  button.equal {
-    background: #22c55e;
-    color: black;
-    font-weight: 700;
-  }
-
-  button.clear {
-    background: #ef4444;
-  }
-
-  button:active {
-    transform: scale(.95);
-  }
+.op { background: #334155; }
+.clear { background: #ef4444; }
+.equal {
+  background: #22c55e;
+  color: #022c22;
+  font-weight: bold;
+}
 </style>
 </head>
 
 <body>
+
 <div class="calculator">
   <div id="display" class="display">0</div>
-  <div id="expr" class="sub"></div>
 
   <div class="keys">
-    <button class="clear" onclick="clearAll()">C</button>
-    <button onclick="append('(')">(</button>
-    <button onclick="append(')')">)</button>
-    <button class="op" onclick="append('/')">÷</button>
+    <button class="clear">C</button>
+    <button>(</button>
+    <button>)</button>
+    <button class="op">÷</button>
 
-    <button onclick="append('7')">7</button>
-    <button onclick="append('8')">8</button>
-    <button onclick="append('9')">9</button>
-    <button class="op" onclick="append('*')">×</button>
+    <button>7</button>
+    <button>8</button>
+    <button>9</button>
+    <button class="op">×</button>
 
-    <button onclick="append('4')">4</button>
-    <button onclick="append('5')">5</button>
-    <button onclick="append('6')">6</button>
-    <button class="op" onclick="append('-')">−</button>
+    <button>4</button>
+    <button>5</button>
+    <button>6</button>
+    <button class="op">−</button>
 
-    <button onclick="append('1')">1</button>
-    <button onclick="append('2')">2</button>
-    <button onclick="append('3')">3</button>
-    <button class="op" onclick="append('+')">+</button>
+    <button>1</button>
+    <button>2</button>
+    <button>3</button>
+    <button class="op">+</button>
 
-    <button onclick="append('0')">0</button>
-    <button onclick="append('.')">.</button>
-    <button onclick="backspace()">⌫</button>
-    <button class="equal" onclick="calculate()">=</button>
+    <button>0</button>
+    <button>.</button>
+    <button>⌫</button>
+    <button class="equal">=</button>
   </div>
 </div>
 
 <script type="module">
-  import init, { evaluate } from "./ultimate_calculator_engine.js";
+import init, { evaluate } from "./ultimate_calculator_engine.js";
 
-  let ready = false;
-  let expression = "";
+let expr = "";
+let wasmReady = false;
+const display = document.getElementById("display");
 
-  async function boot() {
+function render() {
+  display.textContent = expr || "0";
+}
+
+async function boot() {
+  try {
     await init("./ultimate_calculator_engine_bg.wasm");
-    ready = true;
+    wasmReady = true;
+  } catch {
+    console.warn("WASM not ready, UI still works");
   }
+}
+boot();
 
-  boot();
+document.querySelectorAll("button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const v = btn.textContent;
 
-  window.append = (v) => {
-    expression += v;
-    update();
-  };
-
-  window.backspace = () => {
-    expression = expression.slice(0, -1);
-    update();
-  };
-
-  window.clearAll = () => {
-    expression = "";
-    update();
-  };
-
-  window.calculate = () => {
-    if (!ready || !expression) return;
-    try {
-      const result = evaluate(expression);
-      document.getElementById("display").textContent = result;
-    } catch {
-      document.getElementById("display").textContent = "Error";
+    if (v === "C") {
+      expr = "";
+    } else if (v === "⌫") {
+      expr = expr.slice(0, -1);
+    } else if (v === "=") {
+      if (!expr) return;
+      try {
+        expr = wasmReady ? evaluate(expr) : eval(expr.replace("×","*").replace("÷","/"));
+      } catch {
+        expr = "Error";
+      }
+    } else {
+      expr += v
+        .replace("×","*")
+        .replace("÷","/")
+        .replace("−","-");
     }
-  };
-
-  function update() {
-    document.getElementById("expr").textContent = expression;
-    document.getElementById("display").textContent = expression || "0";
-  }
+    render();
+  });
+});
 </script>
+
 </body>
 </html>
