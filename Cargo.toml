@@ -1,12 +1,13 @@
 [package]
-name = "engine"
+name = "ultimate_calculator_engine"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [dependencies]
 num-bigint = "0.4"
 num-rational = "0.4"
 num-traits = "0.2"
+wasm-bindgen = "0.2"
