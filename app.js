@@ -9,9 +9,9 @@ function updateScreen() {
   screen.textContent = expression || "0";
 }
 
-function addHistory(entry) {
+function addHistory(text) {
   const div = document.createElement("div");
-  div.textContent = entry;
+  div.textContent = text;
   historyEl.prepend(div);
 }
 
@@ -19,80 +19,100 @@ function toRadians(x) {
   return x * Math.PI / 180;
 }
 
-function evaluateExpression(expr) {
-  let e = expr
-    .replace(/÷/g, "/")
+function normalize(expr) {
+  return expr
     .replace(/×/g, "*")
+    .replace(/÷/g, "/")
     .replace(/\^/g, "**")
     .replace(/sin\(([^)]+)\)/g, (_, x) =>
-      `Math.sin(${mode === "DEG" ? "toRadians(" + x + ")" : x})`
+      `Math.sin(${mode === "DEG" ? `toRadians(${x})` : x})`
     )
     .replace(/cos\(([^)]+)\)/g, (_, x) =>
-      `Math.cos(${mode === "DEG" ? "toRadians(" + x + ")" : x})`
+      `Math.cos(${mode === "DEG" ? `toRadians(${x})` : x})`
     )
     .replace(/tan\(([^)]+)\)/g, (_, x) =>
-      `Math.tan(${mode === "DEG" ? "toRadians(" + x + ")" : x})`
+      `Math.tan(${mode === "DEG" ? `toRadians(${x})` : x})`
     );
-
-  return Function("toRadians", `return ${e}`)(toRadians);
 }
+
+function evaluate(expr) {
+  return Function("toRadians", `return ${normalize(expr)}`)(toRadians);
+}
+
+/* ---------- BUTTON HANDLER ---------- */
 
 document.querySelector(".keys").addEventListener("click", (e) => {
   const btn = e.target;
-  if (!btn.tagName === "BUTTON") return;
+  if (btn.tagName !== "BUTTON") return;
 
-  const value = btn.dataset.value;
-  const action = btn.dataset.action;
+  const v = btn.dataset.value;
+  const act = btn.dataset.action;
   const fn = btn.dataset.fn;
 
-  if (value) {
-    expression += value;
+  /* VALUES */
+  if (v) {
+    expression += v;
     updateScreen();
+    return;
   }
 
+  /* FUNCTIONS */
   if (fn) {
-    expression += `${fn}(`;
+    expression += fn + "(";
     updateScreen();
+    return;
   }
 
-  if (action === "clear") {
-    expression = "";
-    updateScreen();
-  }
-
-  if (action === "backspace") {
-    expression = expression.slice(0, -1);
-    updateScreen();
-  }
-
-  if (action === "toggle-mode") {
-    mode = mode === "DEG" ? "RAD" : "DEG";
-    modeEl.textContent = mode;
-  }
-
-  if (action === "percent") {
-    try {
-      const val = evaluateExpression(expression);
-      expression = (val / 100).toString();
-      updateScreen();
-    } catch {
-      screen.textContent = "Error";
-    }
-  }
-
-  if (action === "equals") {
-    try {
-      const result = evaluateExpression(expression);
-      addHistory(`${expression} = ${result}`);
-      expression = result.toString();
-      updateScreen();
-    } catch {
-      screen.textContent = "Error";
+  /* ACTIONS */
+  switch (act) {
+    case "clear":
       expression = "";
-    }
-  }
+      updateScreen();
+      break;
 
-  if (action === "clear-history") {
-    historyEl.innerHTML = "";
+    case "backspace":
+      expression = expression.slice(0, -1);
+      updateScreen();
+      break;
+
+    case "toggle-mode":
+      mode = mode === "DEG" ? "RAD" : "DEG";
+      modeEl.textContent = mode;
+      break;
+
+    case "percent":
+      try {
+        // extract last number
+        const match = expression.match(/(\d+(\.\d+)?)$/);
+        if (!match) return;
+
+        const num = parseFloat(match[1]);
+        const percentValue = num / 100;
+
+        expression =
+          expression.slice(0, -match[1].length) + percentValue;
+
+        updateScreen();
+      } catch {
+        screen.textContent = "Error";
+        expression = "";
+      }
+      break;
+
+    case "equals":
+      try {
+        const result = evaluate(expression);
+        addHistory(`${expression} = ${result}`);
+        expression = result.toString();
+        updateScreen();
+      } catch {
+        screen.textContent = "Error";
+        expression = "";
+      }
+      break;
+
+    case "clear-history":
+      historyEl.innerHTML = "";
+      break;
   }
 });
