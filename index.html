@@ -9,14 +9,20 @@
 <body>
 
 <div class="calculator">
-  <div class="top">
-    <div id="display" class="display">0</div>
+  <div class="display-box">
+    <div id="mode">DEG</div>
+    <div id="display">0</div>
   </div>
 
   <div class="buttons">
     <button class="danger" onclick="clearAll()">C</button>
-    <button onclick="backspace()">⌫</button>
-    <button onclick="press('%')">%</button>
+    <button class="blue" onclick="toggleDeg()">DEG</button>
+    <button onclick="press('(')">(</button>
+    <button onclick="press(')')">)</button>
+
+    <button class="blue" onclick="func('sin')">sin</button>
+    <button class="blue" onclick="func('cos')">cos</button>
+    <button class="blue" onclick="func('tan')">tan</button>
     <button onclick="press('/')">÷</button>
 
     <button onclick="press('7')">7</button>
@@ -34,14 +40,18 @@
     <button onclick="press('3')">3</button>
     <button onclick="press('+')">+</button>
 
-    <button class="wide" onclick="press('0')">0</button>
+    <button onclick="press('0')">0</button>
     <button onclick="press('.')">.</button>
+    <button onclick="percent()">%</button>
     <button class="equals" onclick="calculate()">=</button>
   </div>
 
   <div class="history">
-    <h3>History</h3>
-    <div id="historyList"></div>
+    <div class="history-header">
+      <span>History</span>
+      <button onclick="clearHistory()">Clear</button>
+    </div>
+    <div id="history"></div>
   </div>
 </div>
 
