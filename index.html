@@ -1,117 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ultimate WASM Calculator</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ultimate Calculator (WASM)</title>
 
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-    }
+<style>
+  * {
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
 
-    .card {
-      background: #020617;
-      border-radius: 14px;
-      padding: 20px;
-      width: 100%;
-      max-width: 420px;
-      box-shadow: 0 20px 40px rgba(0,0,0,.6);
-    }
+  body {
+    margin: 0;
+    background: #0b1220;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
 
-    h2 {
-      margin: 0 0 12px;
-      text-align: center;
-    }
+  .calculator {
+    width: 100%;
+    max-width: 380px;
+    background: #0f172a;
+    border-radius: 22px;
+    padding: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  }
 
-    .row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
+  .display {
+    background: #020617;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 28px;
+    text-align: right;
+    min-height: 60px;
+    word-wrap: break-word;
+  }
 
-    input {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-    }
+  .sub {
+    font-size: 14px;
+    opacity: .6;
+    margin-top: 6px;
+    text-align: right;
+  }
 
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      background: #2563eb;
-      color: white;
-    }
+  .keys {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+  }
 
-    button:hover {
-      background: #1d4ed8;
-    }
+  button {
+    height: 64px;
+    border-radius: 50%;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    background: #1e293b;
+    color: white;
+  }
 
-    .result {
-      margin-top: 14px;
-      background: #020617;
-      border: 1px solid #1e293b;
-      border-radius: 8px;
-      padding: 10px;
-      font-family: monospace;
-      word-break: break-all;
-      min-height: 40px;
-    }
+  button.op {
+    background: #334155;
+  }
 
-    .label {
-      font-size: 13px;
-      opacity: 0.7;
-      margin-bottom: 4px;
-    }
-  </style>
+  button.equal {
+    background: #22c55e;
+    color: black;
+    font-weight: 700;
+  }
+
+  button.clear {
+    background: #ef4444;
+  }
+
+  button:active {
+    transform: scale(.95);
+  }
+</style>
 </head>
 
 <body>
-  <div class="card">
-    <h2>Ultimate Calculator (WASM)</h2>
+<div class="calculator">
+  <div id="display" class="display">0</div>
+  <div id="expr" class="sub"></div>
 
-    <div class="label">Number A</div>
-    <input id="a" value="99999999999999999999" />
+  <div class="keys">
+    <button class="clear" onclick="clearAll()">C</button>
+    <button onclick="append('(')">(</button>
+    <button onclick="append(')')">)</button>
+    <button class="op" onclick="append('/')">÷</button>
 
-    <div class="label" style="margin-top:10px;">Number B</div>
-    <input id="b" value="2" />
+    <button onclick="append('7')">7</button>
+    <button onclick="append('8')">8</button>
+    <button onclick="append('9')">9</button>
+    <button class="op" onclick="append('*')">×</button>
 
-    <button onclick="calc()" style="margin-top:14px;">
-      Multiply
-    </button>
+    <button onclick="append('4')">4</button>
+    <button onclick="append('5')">5</button>
+    <button onclick="append('6')">6</button>
+    <button class="op" onclick="append('-')">−</button>
 
-    <div class="label" style="margin-top:14px;">Result</div>
-    <div id="out" class="result"></div>
+    <button onclick="append('1')">1</button>
+    <button onclick="append('2')">2</button>
+    <button onclick="append('3')">3</button>
+    <button class="op" onclick="append('+')">+</button>
+
+    <button onclick="append('0')">0</button>
+    <button onclick="append('.')">.</button>
+    <button onclick="backspace()">⌫</button>
+    <button class="equal" onclick="calculate()">=</button>
   </div>
+</div>
 
-  <script type="module">
-    import init, { multiply } from "./ultimate_calculator_engine.js";
+<script type="module">
+  import init, { evaluate } from "./ultimate_calculator_engine.js";
 
-    async function boot() {
-      await init();
-      window.calc = () => {
-        const a = document.getElementById("a").value;
-        const b = document.getElementById("b").value;
-        document.getElementById("out").textContent =
-          multiply(a, b);
-      };
+  let ready = false;
+  let expression = "";
+
+  async function boot() {
+    await init("./ultimate_calculator_engine_bg.wasm");
+    ready = true;
+  }
+
+  boot();
+
+  window.append = (v) => {
+    expression += v;
+    update();
+  };
+
+  window.backspace = () => {
+    expression = expression.slice(0, -1);
+    update();
+  };
+
+  window.clearAll = () => {
+    expression = "";
+    update();
+  };
+
+  window.calculate = () => {
+    if (!ready || !expression) return;
+    try {
+      const result = evaluate(expression);
+      document.getElementById("display").textContent = result;
+    } catch {
+      document.getElementById("display").textContent = "Error";
     }
+  };
 
-    boot();
-  </script>
+  function update() {
+    document.getElementById("expr").textContent = expression;
+    document.getElementById("display").textContent = expression || "0";
+  }
+</script>
 </body>
 </html>
