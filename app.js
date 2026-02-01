@@ -1,65 +1,103 @@
-let expression = "";
-let isDeg = true;
-
 const display = document.getElementById("display");
-const mode = document.getElementById("mode");
+const modeEl = document.getElementById("mode");
+const historyList = document.getElementById("historyList");
 
-function press(val) {
-  if (display.innerText === "Error") {
-    expression = "";
-  }
-  expression += val;
-  display.innerText = expression;
+let expr = "";
+let isDeg = false;
+let history = [];
+
+function updateDisplay(v) {
+  display.textContent = v;
+}
+
+/* INPUT */
+
+function press(v) {
+  expr += v;
+  updateDisplay(expr);
 }
 
 function clearAll() {
-  expression = "";
-  display.innerText = "0";
+  expr = "";
+  updateDisplay("0");
 }
 
 function backspace() {
-  expression = expression.slice(0, -1);
-  display.innerText = expression || "0";
+  expr = expr.slice(0, -1);
+  updateDisplay(expr || "0");
 }
+
+/* MODE */
 
 function toggleDeg() {
   isDeg = !isDeg;
-  mode.innerText = isDeg ? "DEG" : "RAD";
+  modeEl.textContent = isDeg ? "DEG" : "RAD";
 }
 
-function func(name) {
-  expression += name + "(";
-  display.innerText = expression;
+/* FUNCTIONS */
+
+function func(f) {
+  expr += f + "(";
+  updateDisplay(expr);
+}
+
+/* MATH */
+
+function toRad(x) {
+  return x * Math.PI / 180;
 }
 
 function calculate() {
+  if (!expr) return;
+
   try {
-    let exp = expression;
+    let safe = expr
+      .replace(/sin\(/g, "Math.sin(")
+      .replace(/cos\(/g, "Math.cos(")
+      .replace(/tan\(/g, "Math.tan(");
 
-    exp = exp.replace(/sin\(([^)]+)\)/g, (_, x) =>
-      Math.sin(convert(x))
-    );
-    exp = exp.replace(/cos\(([^)]+)\)/g, (_, x) =>
-      Math.cos(convert(x))
-    );
-    exp = exp.replace(/tan\(([^)]+)\)/g, (_, x) =>
-      Math.tan(convert(x))
-    );
+    if (isDeg) {
+      safe = safe
+        .replace(/Math\.sin\(([^)]+)\)/g, "Math.sin(toRad($1))")
+        .replace(/Math\.cos\(([^)]+)\)/g, "Math.cos(toRad($1))")
+        .replace(/Math\.tan\(([^)]+)\)/g, "Math.tan(toRad($1))");
+    }
 
-    let result = eval(exp);
+    const result = Function(
+      "toRad",
+      `"use strict"; return (${safe})`
+    )(toRad);
 
-    display.innerText = result;
-    expression = result.toString();
+    const resultStr = result.toString();
+
+    saveHistory(expr, resultStr);
+    expr = resultStr;
+    updateDisplay(resultStr);
+
   } catch {
-    display.innerText = "Error";
-    expression = "";
+    updateDisplay("Error");
+    expr = "";
   }
 }
 
-function convert(value) {
-  let num = parseFloat(value);
-  if (isDeg) {
-    return num * Math.PI / 180;
-  }
-  return num;
+/* HISTORY */
+
+function saveHistory(e, r) {
+  history.unshift(`${e} = ${r}`);
+  if (history.length > 10) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  historyList.innerHTML = "";
+  history.forEach(h => {
+    const li = document.createElement("li");
+    li.textContent = h;
+    historyList.appendChild(li);
+  });
+}
+
+function clearHistory() {
+  history = [];
+  renderHistory();
 }
