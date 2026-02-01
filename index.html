@@ -1,20 +1,105 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ultimate WASM Calculator</title>
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 14px;
+      padding: 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.6);
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      text-align: center;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .result {
+      margin-top: 14px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: monospace;
+      word-break: break-all;
+      min-height: 40px;
+    }
+
+    .label {
+      font-size: 13px;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+  </style>
 </head>
+
 <body>
-  <h2>Ultimate Calculator (WASM)</h2>
+  <div class="card">
+    <h2>Ultimate Calculator (WASM)</h2>
 
-  <input id="a" value="99999999999999999999">
-  <input id="b" value="2">
-  <button onclick="calc()">Multiply</button>
+    <div class="label">Number A</div>
+    <input id="a" value="99999999999999999999" />
 
-  <pre id="out"></pre>
+    <div class="label" style="margin-top:10px;">Number B</div>
+    <input id="b" value="2" />
+
+    <button onclick="calc()" style="margin-top:14px;">
+      Multiply
+    </button>
+
+    <div class="label" style="margin-top:14px;">Result</div>
+    <div id="out" class="result"></div>
+  </div>
 
   <script type="module">
-    import init, { multiply } from "./pkg/ultimate_calculator_engine.js";
+    import init, { multiply } from "./ultimate_calculator_engine.js";
 
     async function boot() {
       await init();
