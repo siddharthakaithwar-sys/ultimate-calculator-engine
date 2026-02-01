@@ -1,98 +1,83 @@
-* {
-  box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+*{
+  box-sizing:border-box;
+  user-select:none;
 }
 
-body {
-  margin: 0;
-  background: radial-gradient(circle at top, #0c1a2f, #060b17);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+body{
+  margin:0;
+  background:#000;
+  color:#fff;
+  font-family:system-ui, monospace;
+  display:flex;
+  justify-content:center;
 }
 
-/* MAIN CARD */
-.calculator {
-  width: 100%;
-  max-width: 380px;
-  background: #0e1b32;
-  border-radius: 22px;
-  padding: 16px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+.calculator{
+  width:360px;
+  padding:20px;
 }
 
-/* DISPLAY */
-.display-box {
-  background: linear-gradient(180deg, #0b1628, #050b17);
-  border-radius: 16px;
-  padding: 12px 14px;
-  margin-bottom: 14px;
-  overflow: hidden;
+.display{
+  background:#0a0a0a;
+  color:#00eaff;
+  padding:20px;
+  border-radius:14px;
+  font-size:26px;
+  min-height:60px;
+  overflow-x:auto;
+  white-space:nowrap;
 }
 
-.mode {
-  font-size: 13px;
-  color: #9bb3ff;
-  margin-bottom: 6px;
+.buttons{
+  margin-top:15px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
 }
 
-.display {
-  color: #ffffff;
-  font-size: clamp(22px, 6vw, 32px);
-  font-weight: 600;
-  text-align: right;
-  white-space: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
+button{
+  padding:18px;
+  font-size:18px;
+  border:none;
+  border-radius:14px;
+  background:#1c1c1c;
+  color:#fff;
 }
 
-.display::-webkit-scrollbar {
-  display: none;
+button:active{
+  background:#333;
 }
 
-/* BUTTON GRID */
-.buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+.danger{
+  background:#c62828;
 }
 
-button {
-  height: 54px;
-  border-radius: 999px;
-  border: none;
-  font-size: 17px;
-  color: #ffffff;
-  background: #2a3955;
-  cursor: pointer;
-  transition: transform 0.05s ease, background 0.15s;
+.equals{
+  background:#007bff;
 }
 
-button:active {
-  transform: scale(0.96);
+.wide{
+  grid-column:span 2;
 }
 
-/* COLORS */
-button.blue {
-  background: #4aa3df;
-  color: #021a2b;
+.history{
+  margin-top:20px;
+  background:#0a0a0a;
+  border-radius:14px;
+  padding:10px;
+  max-height:180px;
+  overflow-y:auto;
 }
 
-button.danger {
-  background: #e84c4c;
+.history h3{
+  margin:5px 0 10px;
+  color:#aaa;
+  font-size:14px;
 }
 
-button.equals {
-  background: #2ecc71;
-  color: #062313;
-  grid-column: span 4;
-  height: 56px;
-  font-size: 20px;
-}
-
-/* ERROR DISPLAY (safe) */
-.display.error {
-  color: #ff6b6b;
+.history-item{
+  font-size:14px;
+  margin-bottom:6px;
+  color:#ddd;
+  word-break:break-all;
 }
