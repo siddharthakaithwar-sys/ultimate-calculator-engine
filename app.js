@@ -1,144 +1,162 @@
-const screen = document.getElementById("screen");
-const modeEl = document.getElementById("mode");
-const historyEl = document.getElementById("history");
+/* =========================
+   CORE STATE
+========================= */
+let displayValue = "0";
+let isDeg = true;
+let history = [];
 
-let expression = "";
-let mode = "DEG";
+/* =========================
+   DOM
+========================= */
+const display = document.getElementById("display");
+const modeLabel = document.getElementById("mode");
+const historyBox = document.getElementById("history");
 
-function updateScreen(val = expression) {
-  screen.textContent = val || "0";
+/* =========================
+   DISPLAY
+========================= */
+function updateDisplay() {
+  display.textContent = displayValue;
+  modeLabel.textContent = isDeg ? "DEG" : "RAD";
 }
 
-/* ---------- NUMBER FORMATTER ---------- */
-function formatNumber(num) {
-  if (!isFinite(num)) return "Error";
-
-  // prevent scientific notation
-  let str = num.toString();
-
-  if (str.includes("e")) {
-    const [base, exp] = str.split("e");
-    const decimals = Math.max(0, Math.abs(+exp));
-    str = Number(num).toFixed(decimals).replace(/\.?0+$/, "");
+/* =========================
+   INPUT
+========================= */
+function press(val) {
+  if (displayValue === "0" && "0123456789".includes(val)) {
+    displayValue = val;
+  } else {
+    displayValue += val;
   }
-
-  // trim long decimals
-  if (str.includes(".")) {
-    const [i, d] = str.split(".");
-    str = i + "." + d.slice(0, 12);
-  }
-
-  return str;
+  updateDisplay();
 }
 
-/* ---------- HISTORY ---------- */
-function addHistory(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  historyEl.prepend(div);
+function backspace() {
+  displayValue = displayValue.slice(0, -1);
+  if (displayValue === "") displayValue = "0";
+  updateDisplay();
 }
 
-/* ---------- TRIG ---------- */
+function clearAll() {
+  displayValue = "0";
+  updateDisplay();
+}
+
+/* =========================
+   MODE
+========================= */
+function toggleDeg() {
+  isDeg = !isDeg;
+  updateDisplay();
+}
+
+/* =========================
+   FUNCTIONS
+========================= */
+function func(name) {
+  displayValue += name + "(";
+  updateDisplay();
+}
+
+/* =========================
+   SAFE MATH HELPERS
+========================= */
 function toRadians(x) {
-  return x * Math.PI / 180;
+  return isDeg ? (x * Math.PI) / 180 : x;
 }
 
-/* ---------- NORMALIZE ---------- */
-function normalize(expr) {
-  return expr
-    .replace(/×/g, "*")
-    .replace(/÷/g, "/")
-    .replace(/\^/g, "**")
-    .replace(/sin\(([^)]+)\)/g, (_, x) =>
-      `Math.sin(${mode === "DEG" ? `toRadians(${x})` : x})`
-    )
-    .replace(/cos\(([^)]+)\)/g, (_, x) =>
-      `Math.cos(${mode === "DEG" ? `toRadians(${x})` : x})`
-    )
-    .replace(/tan\(([^)]+)\)/g, (_, x) =>
-      `Math.tan(${mode === "DEG" ? `toRadians(${x})` : x})`
+function noExpo(num) {
+  let str = num.toString();
+  if (!str.includes("e")) return str;
+
+  let [base, exp] = str.split("e");
+  let sign = exp.startsWith("-") ? -1 : 1;
+  exp = Math.abs(Number(exp));
+
+  let [i, d = ""] = base.split(".");
+  if (sign === 1) {
+    return i + d.padEnd(exp, "0");
+  } else {
+    return "0." + "0".repeat(exp - 1) + i + d;
+  }
+}
+
+/* =========================
+   PERCENT (REAL CALCULATOR)
+========================= */
+function resolvePercent(expr) {
+  return expr.replace(
+    /(\d+(\.\d+)?)%(\d+(\.\d+)?)/g,
+    (_, a, _, b) => `(${a}*${b}/100)`
+  );
+}
+
+/* =========================
+   POWER (^)
+========================= */
+function resolvePower(expr) {
+  while (expr.includes("^")) {
+    expr = expr.replace(
+      /(\d+(\.\d+)?)\^(\d+(\.\d+)?)/,
+      (_, a, _, b) => Math.pow(Number(a), Number(b))
     );
+  }
+  return expr;
 }
 
-function evaluate(expr) {
-  return Function("toRadians", `return ${normalize(expr)}`)(toRadians);
+/* =========================
+   TRIG
+========================= */
+function resolveTrig(expr) {
+  return expr
+    .replace(/sin\(([^)]+)\)/g, (_, x) => Math.sin(toRadians(Number(x))))
+    .replace(/cos\(([^)]+)\)/g, (_, x) => Math.cos(toRadians(Number(x))))
+    .replace(/tan\(([^)]+)\)/g, (_, x) => Math.tan(toRadians(Number(x))));
 }
 
-/* ---------- BUTTONS ---------- */
-document.querySelector(".keys").addEventListener("click", (e) => {
-  const btn = e.target;
-  if (btn.tagName !== "BUTTON") return;
+/* =========================
+   CALCULATE
+========================= */
+function calculate() {
+  try {
+    let expr = displayValue;
 
-  const v = btn.dataset.value;
-  const act = btn.dataset.action;
-  const fn = btn.dataset.fn;
+    expr = resolvePercent(expr);
+    expr = resolvePower(expr);
+    expr = resolveTrig(expr);
 
-  if (v) {
-    expression += v;
-    updateScreen();
-    return;
+    // final eval only on sanitized math
+    let result = Function(`"use strict"; return (${expr})`)();
+
+    let finalResult = noExpo(result);
+
+    history.unshift(`${displayValue} = ${finalResult}`);
+    if (history.length > 20) history.pop();
+
+    displayValue = finalResult;
+    renderHistory();
+    updateDisplay();
+
+  } catch {
+    displayValue = "Error";
+    updateDisplay();
   }
+}
 
-  if (fn) {
-    expression += fn + "(";
-    updateScreen();
-    return;
-  }
+/* =========================
+   HISTORY
+========================= */
+function renderHistory() {
+  historyBox.innerHTML = history.map(h => `<div>${h}</div>`).join("");
+}
 
-  switch (act) {
-    case "clear":
-      expression = "";
-      updateScreen();
-      break;
+function clearHistory() {
+  history = [];
+  historyBox.innerHTML = "";
+}
 
-    case "backspace":
-      expression = expression.slice(0, -1);
-      updateScreen();
-      break;
-
-    case "toggle-mode":
-      mode = mode === "DEG" ? "RAD" : "DEG";
-      modeEl.textContent = mode;
-      break;
-
-    case "percent":
-      try {
-        const match = expression.match(/(\d+(\.\d+)?)$/);
-        if (!match) return;
-
-        const num = parseFloat(match[1]) / 100;
-        expression =
-          expression.slice(0, -match[1].length) + formatNumber(num);
-
-        updateScreen();
-      } catch {
-        updateScreen("Error");
-        expression = "";
-      }
-      break;
-
-    case "equals":
-      try {
-        const raw = evaluate(expression);
-        const result = formatNumber(raw);
-
-        if (result === "Error") {
-          updateScreen("Error");
-          expression = "";
-          return;
-        }
-
-        addHistory(`${expression} = ${result}`);
-        expression = result;
-        updateScreen();
-      } catch {
-        updateScreen("Error");
-        expression = "";
-      }
-      break;
-
-    case "clear-history":
-      historyEl.innerHTML = "";
-      break;
-  }
-});
+/* =========================
+   INIT
+========================= */
+updateDisplay();
