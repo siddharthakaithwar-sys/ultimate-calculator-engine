@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ultimate Calculator</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="calculator">
-  <div class="display-box">
+  <div class="top">
     <span id="mode">DEG</span>
     <div id="display">0</div>
   </div>
 
   <div class="buttons">
-    <button class="danger" data-action="clear">C</button>
-    <button class="blue" data-action="deg">DEG</button>
+    <button data-action="clear" class="danger">C</button>
+    <button data-action="deg">DEG</button>
     <button data-value="(">(</button>
     <button data-value=")">)</button>
 
-    <button class="blue" data-fn="sin">sin</button>
-    <button class="blue" data-fn="cos">cos</button>
-    <button class="blue" data-fn="tan">tan</button>
+    <button data-func="sin">sin</button>
+    <button data-func="cos">cos</button>
+    <button data-func="tan">tan</button>
     <button data-value="/">÷</button>
 
     <button data-value="7">7</button>
@@ -43,18 +43,19 @@
     <button data-value="0">0</button>
     <button data-value=".">.</button>
     <button data-action="percent">%</button>
-    <button class="equals" data-action="equals">=</button>
   </div>
 
+  <button id="equals">=</button>
+
   <div class="history">
-    <div class="history-head">
+    <div class="history-header">
       <span>History</span>
       <button id="clearHistory">Clear</button>
     </div>
-    <div id="historyList"></div>
+    <div id="history"></div>
   </div>
 </div>
 
-<script src="app.js?v=3"></script>
+<script src="app.js"></script>
 </body>
 </html>
