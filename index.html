@@ -1,53 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ultimate Calculator</title>
-  <link rel="stylesheet" href="style.css"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Calculator</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="calculator">
-
   <div class="display">
-    <div id="mode">DEG</div>
+    <span id="mode">DEG</span>
     <div id="screen">0</div>
   </div>
 
   <div class="keys">
-    <button data-action="clear" class="red">C</button>
-    <button data-action="toggle">DEG</button>
-    <button data-value="(">(</button>
-    <button data-value=")">)</button>
+    <button data-act="clear" class="red">C</button>
+    <button data-act="mode">DEG</button>
+    <button data-val="(">(</button>
+    <button data-val=")">)</button>
 
     <button data-fn="sin">sin</button>
     <button data-fn="cos">cos</button>
     <button data-fn="tan">tan</button>
-    <button data-value="/">÷</button>
+    <button data-val="/">÷</button>
 
-    <button data-value="7">7</button>
-    <button data-value="8">8</button>
-    <button data-value="9">9</button>
-    <button data-value="*">×</button>
+    <button data-val="7">7</button>
+    <button data-val="8">8</button>
+    <button data-val="9">9</button>
+    <button data-val="*">×</button>
 
-    <button data-value="4">4</button>
-    <button data-value="5">5</button>
-    <button data-value="6">6</button>
-    <button data-value="-">−</button>
+    <button data-val="4">4</button>
+    <button data-val="5">5</button>
+    <button data-val="6">6</button>
+    <button data-val="-">−</button>
 
-    <button data-value="1">1</button>
-    <button data-value="2">2</button>
-    <button data-value="3">3</button>
-    <button data-value="+">+</button>
+    <button data-val="1">1</button>
+    <button data-val="2">2</button>
+    <button data-val="3">3</button>
+    <button data-val="+">+</button>
 
-    <button data-value="0">0</button>
-    <button data-value=".">.</button>
-    <button data-action="back">⌫</button>
-    <button data-action="percent">%</button>
+    <button data-val="0">0</button>
+    <button data-val=".">.</button>
+    <button data-act="back">⌫</button>
+    <button data-act="percent">%</button>
 
-    <button data-value="^">^</button>
-    <button data-action="equals" class="equals">=</button>
+    <button data-act="power">^</button>
+    <button data-act="equal" class="equals">=</button>
   </div>
 
   <div class="history">
@@ -57,7 +56,6 @@
     </div>
     <div id="historyList"></div>
   </div>
-
 </div>
 
 <script src="app.js"></script>
