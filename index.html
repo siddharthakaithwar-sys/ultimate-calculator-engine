@@ -4,17 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ultimate Calculator</title>
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <div class="calculator">
 
-  <div class="top">
-    <span id="mode">RAD</span>
-    <div id="display">0</div>
+  <!-- DISPLAY -->
+  <div class="display-box">
+    <div class="mode" id="mode">DEG</div>
+    <div class="display" id="display">0</div>
   </div>
 
+  <!-- BUTTONS (unchanged structure) -->
   <div class="buttons">
     <button class="danger" onclick="clearAll()">C</button>
     <button class="blue" onclick="toggleDeg()">DEG</button>
@@ -47,17 +50,8 @@
     <button class="equals" onclick="calculate()">=</button>
   </div>
 
-  <!-- HISTORY -->
-  <div class="history">
-    <div class="history-header">
-      <span>History</span>
-      <button onclick="clearHistory()">Clear</button>
-    </div>
-    <ul id="historyList"></ul>
-  </div>
-
 </div>
 
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
