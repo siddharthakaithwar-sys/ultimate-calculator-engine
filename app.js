@@ -1,52 +1,65 @@
-let expr = "";
-let deg = false;
+let expression = "";
+let isDeg = true;
 
 const display = document.getElementById("display");
 const mode = document.getElementById("mode");
 
-function press(v) {
-  if (display.innerText === "0") expr = "";
-  expr += v;
-  display.innerText = expr;
+function press(val) {
+  if (display.innerText === "Error") {
+    expression = "";
+  }
+  expression += val;
+  display.innerText = expression;
 }
 
 function clearAll() {
-  expr = "";
+  expression = "";
   display.innerText = "0";
 }
 
 function backspace() {
-  expr = expr.slice(0, -1);
-  display.innerText = expr || "0";
+  expression = expression.slice(0, -1);
+  display.innerText = expression || "0";
 }
 
 function toggleDeg() {
-  deg = !deg;
-  mode.innerText = deg ? "DEG" : "RAD";
+  isDeg = !isDeg;
+  mode.innerText = isDeg ? "DEG" : "RAD";
 }
 
-function func(f) {
-  expr += f + "(";
-  display.innerText = expr;
+function func(name) {
+  expression += name + "(";
+  display.innerText = expression;
 }
 
 function calculate() {
   try {
-    let e = expr;
+    let exp = expression;
 
-    if (deg) {
-      e = e.replace(/sin|cos|tan/g, m =>
-        `Math.${m}(Math.PI/180*`
-      );
-    } else {
-      e = e.replace(/sin|cos|tan/g, m => `Math.${m}(`);
-    }
+    exp = exp.replace(/sin\(([^)]+)\)/g, (_, x) =>
+      Math.sin(convert(x))
+    );
+    exp = exp.replace(/cos\(([^)]+)\)/g, (_, x) =>
+      Math.cos(convert(x))
+    );
+    exp = exp.replace(/tan\(([^)]+)\)/g, (_, x) =>
+      Math.tan(convert(x))
+    );
 
-    let result = eval(e);
+    let result = eval(exp);
+
     display.innerText = result;
-    expr = result.toString();
+    expression = result.toString();
   } catch {
     display.innerText = "Error";
-    expr = "";
+    expression = "";
   }
+}
+
+function convert(value) {
+  let num = parseFloat(value);
+  if (isDeg) {
+    return num * Math.PI / 180;
+  }
+  return num;
 }
