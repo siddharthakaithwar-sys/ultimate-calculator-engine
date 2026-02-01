@@ -1,106 +1,95 @@
-const screen = document.getElementById("screen");
-const modeText = document.getElementById("mode");
-const historyList = document.getElementById("historyList");
-
-let exp = "";
-let deg = true;
-
-// ---------------- UI ----------------
-document.querySelector(".keys").addEventListener("click", e => {
-  const b = e.target;
-  if (!b.dataset) return;
-
-  if (b.dataset.val) add(b.dataset.val);
-  if (b.dataset.fn) trig(b.dataset.fn);
-  if (b.dataset.act) action(b.dataset.act);
-});
-
-function update(v) {
-  screen.textContent = v || "0";
+* {
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
 }
 
-// ---------------- BASIC ----------------
-function add(v) {
-  exp += v;
-  update(exp);
+body {
+  margin: 0;
+  background: #0b1220;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  color: #fff;
 }
 
-function action(a) {
-  if (a === "clear") {
-    exp = "";
-    update("0");
-  }
-
-  if (a === "back") {
-    exp = exp.slice(0, -1);
-    update(exp);
-  }
-
-  if (a === "mode") {
-    deg = !deg;
-    modeText.textContent = deg ? "DEG" : "RAD";
-  }
-
-  if (a === "equal") calculate();
-  if (a === "percent") percent();
-  if (a === "power") exp += "^";
+.calculator {
+  width: 360px;
+  background: #0e1a2f;
+  border-radius: 20px;
+  padding: 16px;
 }
 
-// ---------------- PERCENT (ANDROID LOGIC) ----------------
-function percent() {
-  const m = exp.match(/(\d+\.?\d*)$/);
-  if (!m) return;
-
-  const num = parseFloat(m[1]);
-  const left = exp.slice(0, -m[1].length);
-
-  let baseMatch = left.match(/(\d+\.?\d*)(?=[+\-*\/])$/);
-  let base = baseMatch ? parseFloat(baseMatch[1]) : 0;
-
-  let result = base ? (base * num) / 100 : num / 100;
-  exp = left + result;
-  update(exp);
+.display {
+  background: #050b17;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
 }
 
-// ---------------- TRIG ----------------
-function trig(fn) {
-  const m = exp.match(/(\d+\.?\d*)$/);
-  if (!m) return;
-
-  const num = parseFloat(m[1]);
-  let rad = deg ? num * Math.PI / 180 : num;
-
-  let res =
-    fn === "sin" ? Math.sin(rad) :
-    fn === "cos" ? Math.cos(rad) :
-    Math.tan(rad);
-
-  exp = exp.slice(0, -m[1].length) + res;
-  update(exp);
-  save(`${fn}(${num}) = ${res}`);
+.mode {
+  font-size: 14px;
+  opacity: 0.7;
 }
 
-// ---------------- POWER + CALC ----------------
-function calculate() {
-  try {
-    let jsExp = exp.replace(/\^/g, "**");
-    let result = Function("return " + jsExp)();
-    save(`${exp} = ${result}`);
-    exp = result.toString();
-    update(exp);
-  } catch {
-    update("Error");
-    exp = "";
-  }
+.screen {
+  font-size: 32px;
+  text-align: right;
+  word-wrap: break-word;
 }
 
-// ---------------- HISTORY ----------------
-function save(t) {
-  const d = document.createElement("div");
-  d.textContent = t;
-  historyList.prepend(d);
+.keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
 }
 
-document.getElementById("clearHistory").onclick = () => {
-  historyList.innerHTML = "";
-};
+button {
+  height: 52px;
+  border: none;
+  border-radius: 12px;
+  background: #1e2c45;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button.equals {
+  grid-column: span 3;
+  background: #2ecc71;
+  font-size: 22px;
+}
+
+button.danger {
+  background: #e74c3c;
+}
+
+button.small {
+  font-size: 14px;
+  height: 32px;
+}
+
+.history {
+  margin-top: 14px;
+  background: #050b17;
+  border-radius: 12px;
+  padding: 10px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+
+#history div {
+  font-size: 14px;
+  margin-bottom: 4px;
+  opacity: 0.85;
+}
