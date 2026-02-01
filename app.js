@@ -5,72 +5,74 @@ const mode = document.getElementById("mode");
 const historyBox = document.getElementById("history");
 
 function press(v) {
+  if (display.innerText === "0") expr = "";
   expr += v;
-  display.textContent = expr;
+  display.innerText = expr;
 }
 
 function clearAll() {
   expr = "";
-  display.textContent = "0";
-}
-
-function backspace() {
-  expr = expr.slice(0, -1);
-  display.textContent = expr || "0";
+  display.innerText = "0";
 }
 
 function toggleDeg() {
   deg = !deg;
-  mode.textContent = deg ? "DEG" : "RAD";
+  mode.innerText = deg ? "DEG" : "RAD";
 }
 
-function func(f) {
-  expr += f + "(";
-  display.textContent = expr;
+function func(name) {
+  expr += name + "(";
+  display.innerText = expr;
 }
 
 function percent() {
-  // handles a % b
-  expr += "%";
-  display.textContent = expr;
+  try {
+    let v = eval(expr);
+    expr = (v / 100).toString();
+    display.innerText = expr;
+  } catch {
+    display.innerText = "Error";
+  }
 }
 
 function calculate() {
   try {
-    let e = expr;
+    let safe = expr
+      .replace(/sin/g, "calcSin")
+      .replace(/cos/g, "calcCos")
+      .replace(/tan/g, "calcTan");
 
-    // % logic
-    e = e.replace(/(\d+(\.\d+)?)\s*%\s*(\d+(\.\d+)?)/g,
-      (_, a, _, b) => `(${a}*${b}/100)`
-    );
+    let result = eval(safe);
 
-    // trig
-    e = e.replace(/sin\(([^)]+)\)/g, (_, x) =>
-      Math.sin(deg ? x * Math.PI / 180 : x)
-    );
-    e = e.replace(/cos\(([^)]+)\)/g, (_, x) =>
-      Math.cos(deg ? x * Math.PI / 180 : x)
-    );
-    e = e.replace(/tan\(([^)]+)\)/g, (_, x) =>
-      Math.tan(deg ? x * Math.PI / 180 : x)
-    );
+    let readable = formatNumber(result);
+    addHistory(expr + " = " + readable);
 
-    let result = eval(e);
-
-    // force readable (NO scientific notation)
-    let output = result.toString();
-    if (output.includes("e")) {
-      output = Number(result).toFixed(0);
-    }
-
-    historyBox.innerHTML += `<div>${expr} = ${output}</div>`;
-    display.textContent = output;
-    expr = output;
-
+    expr = readable;
+    display.innerText = readable;
   } catch {
-    display.textContent = "Error";
+    display.innerText = "Error";
     expr = "";
   }
+}
+
+function calcSin(x) {
+  return Math.sin(deg ? x * Math.PI / 180 : x);
+}
+function calcCos(x) {
+  return Math.cos(deg ? x * Math.PI / 180 : x);
+}
+function calcTan(x) {
+  return Math.tan(deg ? x * Math.PI / 180 : x);
+}
+
+function formatNumber(n) {
+  if (Number.isInteger(n)) return n.toString();
+  return n.toFixed(12).replace(/\.?0+$/, "");
+}
+
+function addHistory(t) {
+  historyBox.innerHTML =
+    `<div>${t}</div>` + historyBox.innerHTML;
 }
 
 function clearHistory() {
