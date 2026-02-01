@@ -4,7 +4,7 @@
 }
 
 body {
-  background: #050b18;
+  background: #0b1220;
   display: flex;
   justify-content: center;
   padding: 20px;
@@ -12,84 +12,77 @@ body {
 
 .calculator {
   width: 360px;
-  background: #0b1630;
+  background: #0f1b2e;
   border-radius: 20px;
   padding: 16px;
 }
 
-.display-box {
-  background: #020817;
-  border-radius: 16px;
-  padding: 14px;
-  margin-bottom: 12px;
+.display {
+  background: #020617;
   color: white;
+  padding: 16px;
+  border-radius: 14px;
+  text-align: right;
+  margin-bottom: 12px;
 }
 
 #mode {
-  font-size: 14px;
-  color: #6ab4ff;
+  font-size: 12px;
+  opacity: 0.7;
 }
 
-#display {
+#screen {
   font-size: 28px;
-  text-align: right;
-  word-break: break-all;
+  word-wrap: break-word;
 }
 
-.buttons {
+.keys {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 
 button {
-  height: 54px;
+  padding: 14px;
+  border-radius: 14px;
   border: none;
-  border-radius: 16px;
-  background: #1f2f4a;
+  font-size: 16px;
+  background: #1e293b;
   color: white;
-  font-size: 18px;
+  cursor: pointer;
 }
 
 button:active {
   transform: scale(0.96);
 }
 
-button.danger {
-  background: #ff4d4d;
+.red {
+  background: #ef4444;
 }
 
-button.equals {
+.equals {
   grid-column: span 4;
-  height: 60px;
-  background: #34d16d;
+  background: #22c55e;
   font-size: 22px;
 }
 
-.history-box {
-  margin-top: 14px;
-  background: #081226;
+.history {
+  margin-top: 12px;
+  background: #020617;
+  color: white;
   border-radius: 14px;
   padding: 10px;
-  color: white;
 }
 
-.history-header {
+.history .row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 6px;
+  align-items: center;
 }
 
-.history-header button {
-  background: #ff4d4d;
+#historyList {
   font-size: 14px;
-  padding: 4px 10px;
-  height: auto;
-}
-
-#history div {
-  font-size: 14px;
-  opacity: 0.9;
-  border-bottom: 1px solid #16244a;
-  padding: 4px 0;
+  margin-top: 8px;
+  max-height: 120px;
+  overflow-y: auto;
 }
