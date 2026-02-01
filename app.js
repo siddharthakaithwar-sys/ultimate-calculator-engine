@@ -1,12 +1,12 @@
 let expr = "";
 let deg = true;
 
-const screen = document.getElementById("screen");
+const display = document.getElementById("display");
 const mode = document.getElementById("mode");
-const historyList = document.getElementById("historyList");
+const historyBox = document.getElementById("history");
 
 function update(v) {
-  screen.textContent = v;
+  display.textContent = v;
 }
 
 function press(v) {
@@ -34,26 +34,16 @@ function func(f) {
   update(expr);
 }
 
-/* ---------- MODE DETECTION ---------- */
-function isFloatMode(e) {
-  return /[.%÷]|sin|cos|tan|\./.test(e);
-}
-
-/* ---------- NORMALIZE ---------- */
 function normalize(e) {
   return e.replace(/×/g, "*").replace(/÷/g, "/");
 }
 
-/* ---------- PERCENT (RATIO LOGIC) ---------- */
 function handlePercent(e) {
-  // A%B  => A / B
-  e = e.replace(/(\d+(?:\.\d+)?)%(\d+(?:\.\d+)?)/g, "($1/$2)");
-  // A% => A / 100
-  e = e.replace(/(\d+(?:\.\d+)?)%/g, "($1/100)");
+  e = e.replace(/(\d+(\.\d+)?)%(\d+(\.\d+)?)/g, "($1/$3)");
+  e = e.replace(/(\d+(\.\d+)?)%/g, "($1/100)");
   return e;
 }
 
-/* ---------- FLOAT EVAL ---------- */
 function evalFloat(e) {
   e = normalize(handlePercent(e));
 
@@ -62,34 +52,27 @@ function evalFloat(e) {
        .replace(/tan\(/g, "Math.tan(");
 
   if (deg) {
-    e = e.replace(
-      /Math\.(sin|cos|tan)\(([^)]+)\)/g,
-      (_, fn, v) => `Math.${fn}(${v}*Math.PI/180)`
+    e = e.replace(/Math\.(sin|cos|tan)\(([^)]+)\)/g,
+      (_, f, v) => `Math.${f}(${v}*Math.PI/180)`
     );
   }
 
   return Number(eval(e).toFixed(12)).toString();
 }
 
-/* ---------- BIGINT EVAL ---------- */
-function evalBigInt(e) {
+function evalBig(e) {
   e = normalize(e);
-
-  // power first
   e = e.replace(/(\d+)\^(\d+)/g, "($1n**$2n)");
-
-  // remaining numbers
   e = e.replace(/\b\d+\b/g, m => m + "n");
-
   return eval(e).toString();
 }
 
-/* ---------- CALCULATE ---------- */
 function calculate() {
   try {
-    let result = isFloatMode(expr)
-      ? evalFloat(expr)
-      : evalBigInt(expr);
+    const result =
+      /sin|cos|tan|%|\.|\//.test(expr)
+        ? evalFloat(expr)
+        : evalBig(expr);
 
     addHistory(expr, result);
     expr = result;
@@ -99,13 +82,12 @@ function calculate() {
   }
 }
 
-/* ---------- HISTORY ---------- */
 function addHistory(e, r) {
   const d = document.createElement("div");
   d.textContent = `${e} = ${r}`;
-  historyList.prepend(d);
+  historyBox.prepend(d);
 }
 
 function clearHistory() {
-  historyList.innerHTML = "";
+  historyBox.innerHTML = "";
 }
