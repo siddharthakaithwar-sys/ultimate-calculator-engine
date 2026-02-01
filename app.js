@@ -1,80 +1,87 @@
 let expr = "";
-let deg = true;
+let isDeg = true;
+
 const display = document.getElementById("display");
 const mode = document.getElementById("mode");
-const historyBox = document.getElementById("history");
+const historyList = document.getElementById("historyList");
 
-function press(v) {
-  if (display.innerText === "0") expr = "";
-  expr += v;
-  display.innerText = expr;
-}
+document.querySelectorAll("button").forEach(btn => {
+  btn.addEventListener("click", () => handle(btn));
+});
 
-function clearAll() {
-  expr = "";
-  display.innerText = "0";
-}
-
-function toggleDeg() {
-  deg = !deg;
-  mode.innerText = deg ? "DEG" : "RAD";
-}
-
-function func(name) {
-  expr += name + "(";
-  display.innerText = expr;
-}
-
-function percent() {
-  try {
-    let v = eval(expr);
-    expr = (v / 100).toString();
-    display.innerText = expr;
-  } catch {
-    display.innerText = "Error";
+function handle(btn) {
+  if (btn.dataset.value) {
+    expr += btn.dataset.value;
+    update();
   }
+
+  if (btn.dataset.fn) {
+    expr += btn.dataset.fn + "(";
+    update();
+  }
+
+  if (btn.dataset.action === "clear") {
+    expr = "";
+    display.textContent = "0";
+  }
+
+  if (btn.dataset.action === "deg") {
+    isDeg = !isDeg;
+    mode.textContent = isDeg ? "DEG" : "RAD";
+  }
+
+  if (btn.dataset.action === "percent") {
+    expr = "(" + expr + ")/100";
+    update();
+  }
+
+  if (btn.dataset.action === "equals") {
+    calculate();
+  }
+}
+
+function update() {
+  display.textContent = expr || "0";
 }
 
 function calculate() {
   try {
-    let safe = expr
-      .replace(/sin/g, "calcSin")
-      .replace(/cos/g, "calcCos")
-      .replace(/tan/g, "calcTan");
+    let calcExpr = expr
+      .replace(/sin/g, "Math.sin")
+      .replace(/cos/g, "Math.cos")
+      .replace(/tan/g, "Math.tan");
 
-    let result = eval(safe);
+    if (isDeg) {
+      calcExpr = calcExpr
+        .replace(/Math.sin\(([^)]+)\)/g, "Math.sin(($1)*Math.PI/180)")
+        .replace(/Math.cos\(([^)]+)\)/g, "Math.cos(($1)*Math.PI/180)")
+        .replace(/Math.tan\(([^)]+)\)/g, "Math.tan(($1)*Math.PI/180)");
+    }
 
-    let readable = formatNumber(result);
-    addHistory(expr + " = " + readable);
+    let result = eval(calcExpr);
 
-    expr = readable;
-    display.innerText = readable;
+    // ❌ scientific notation बंद
+    if (Math.abs(result) > 1e15) {
+      result = BigInt(Math.round(result)).toString();
+    } else {
+      result = Number(result.toFixed(12)).toString();
+    }
+
+    addHistory(expr + " = " + result);
+    expr = result;
+    display.textContent = result;
   } catch {
-    display.innerText = "Error";
+    display.textContent = "Error";
     expr = "";
   }
 }
 
-function calcSin(x) {
-  return Math.sin(deg ? x * Math.PI / 180 : x);
-}
-function calcCos(x) {
-  return Math.cos(deg ? x * Math.PI / 180 : x);
-}
-function calcTan(x) {
-  return Math.tan(deg ? x * Math.PI / 180 : x);
+function addHistory(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  historyList.prepend(div);
 }
 
-function formatNumber(n) {
-  if (Number.isInteger(n)) return n.toString();
-  return n.toFixed(12).replace(/\.?0+$/, "");
-}
-
-function addHistory(t) {
-  historyBox.innerHTML =
-    `<div>${t}</div>` + historyBox.innerHTML;
-}
-
-function clearHistory() {
-  historyBox.innerHTML = "";
-}
+document.getElementById("clearHistory").onclick = () => {
+  historyList.innerHTML = "";
+};
