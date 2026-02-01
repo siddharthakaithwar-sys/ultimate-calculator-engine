@@ -5,8 +5,8 @@ const screen = document.getElementById("screen");
 const modeEl = document.getElementById("mode");
 const historyList = document.getElementById("historyList");
 
-function updateScreen(val) {
-  screen.textContent = val;
+function updateScreen(v) {
+  screen.textContent = v;
 }
 
 function press(v) {
@@ -29,95 +29,69 @@ function toggleDeg() {
   modeEl.textContent = degMode ? "DEG" : "RAD";
 }
 
-function func(name) {
-  expression += name + "(";
+function func(f) {
+  expression += f + "(";
   updateScreen(expression);
 }
 
-/* ---------- POWER ---------- */
-function square() {
-  expression += "^2";
-  updateScreen(expression);
+/* ---------- DETECT FLOAT MODE ---------- */
+function needsFloat(exp) {
+  return /sin|cos|tan|\./.test(exp);
 }
 
-function cube() {
-  expression += "^3";
-  updateScreen(expression);
+/* ---------- BIGINT EVALUATOR ---------- */
+function evalBigInt(exp) {
+  exp = exp.replace(/×/g, "*").replace(/÷/g, "/");
+
+  // power
+  exp = exp.replace(/(\d+)\^(\d+)/g, (_, a, b) => {
+    return `(${a}n ** ${b}n)`;
+  });
+
+  // % (simple %)
+  exp = exp.replace(/(\d+)%/g, (_, a) => {
+    return `(${a}n / 100n)`;
+  });
+
+  return eval(exp.replace(/(\d+)/g, "$1n")).toString();
 }
 
-/* ---------- PERCENT (REAL LOGIC) ---------- */
-function percent() {
-  try {
-    const match = expression.match(/(.+)([+\-*/])(\d+(\.\d+)?)$/);
+/* ---------- FLOAT EVALUATOR ---------- */
+function evalFloat(exp) {
+  exp = exp
+    .replace(/sin\(/g, "Math.sin(")
+    .replace(/cos\(/g, "Math.cos(")
+    .replace(/tan\(/g, "Math.tan(");
 
-    if (!match) {
-      let v = eval(expression);
-      expression = String(v / 100);
-      updateScreen(expression);
-      return;
-    }
-
-    const base = eval(match[1]);
-    const op = match[2];
-    const p = parseFloat(match[3]) / 100;
-
-    let result;
-    if (op === "+" || op === "-") {
-      result = base + (op === "+" ? base * p : -base * p);
-    } else {
-      result = base * p;
-    }
-
-    addHistory(expression + "%", result);
-    expression = String(result);
-    updateScreen(expression);
-
-  } catch {
-    updateScreen("Error");
+  if (degMode) {
+    exp = exp.replace(/Math\.(sin|cos|tan)\(([^)]+)\)/g,
+      (_, fn, v) => `Math.${fn}(${v} * Math.PI / 180)`
+    );
   }
+
+  let r = eval(exp);
+  return Number(r.toFixed(12)).toString();
 }
 
 /* ---------- CALCULATE ---------- */
 function calculate() {
   try {
-    let exp = expression;
-
-    /* power */
-    exp = exp.replace(/(\d+(\.\d+)?)\^(\d+)/g,
-      (_, a, __, b) => `Math.pow(${a},${b})`
-    );
-
-    /* trig */
-    exp = exp
-      .replace(/sin\(/g, "Math.sin(")
-      .replace(/cos\(/g, "Math.cos(")
-      .replace(/tan\(/g, "Math.tan(");
-
-    if (degMode) {
-      exp = exp.replace(/Math\.(sin|cos|tan)\(([^)]+)\)/g,
-        (_, fn, v) => `Math.${fn}(${v} * Math.PI / 180)`
-      );
-    }
-
-    let result = eval(exp);
-
-    if (typeof result === "number" && !Number.isInteger(result)) {
-      result = Number(result.toFixed(12));
-    }
+    let result = needsFloat(expression)
+      ? evalFloat(expression)
+      : evalBigInt(expression);
 
     addHistory(expression, result);
-    expression = String(result);
-    updateScreen(expression);
-
+    expression = result;
+    updateScreen(result);
   } catch {
     updateScreen("Error");
   }
 }
 
 /* ---------- HISTORY ---------- */
-function addHistory(exp, res) {
+function addHistory(e, r) {
   const d = document.createElement("div");
-  d.textContent = `${exp} = ${res}`;
+  d.textContent = `${e} = ${r}`;
   historyList.prepend(d);
 }
 
