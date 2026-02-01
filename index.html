@@ -6,56 +6,64 @@
 <title>Ultimate Calculator (WASM)</title>
 
 <style>
-  body {
-    margin: 0;
-    background: radial-gradient(circle at top, #0d1b2a, #000814);
-    font-family: system-ui, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    color: #fff;
-  }
-
-  .calc {
-    width: 340px;
-    background: #0b132b;
-    border-radius: 24px;
-    padding: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.6);
-  }
-
-  .display {
-    height: 80px;
-    background: #020617;
-    border-radius: 16px;
-    padding: 12px;
-    font-size: 32px;
-    text-align: right;
-    overflow-x: auto;
-  }
-
-  .keys {
-    margin-top: 16px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-  }
-
-  button {
-    height: 64px;
-    border-radius: 50%;
-    border: none;
-    font-size: 20px;
-    background: #1c2541;
-    color: #fff;
-  }
-
-  button.op { background: #3a86ff; }
-  button.equal { background: #2ec4b6; color: #000; }
-  button.clear { background: #ef233c; }
-
-  button:active { transform: scale(0.96); }
+:root{
+  --bg:#0b1324;
+  --panel:#111b2e;
+  --btn:#1e2a44;
+  --op:#2b3b5f;
+  --green:#2ecc71;
+  --red:#e74c3c;
+  --text:#ffffff;
+}
+*{box-sizing:border-box;font-family:system-ui;}
+body{
+  margin:0;
+  background:linear-gradient(180deg,#050b18,#0b1324);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--text);
+}
+.calc{
+  width:340px;
+  background:var(--panel);
+  border-radius:22px;
+  padding:16px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);
+}
+.display{
+  background:#050b18;
+  border-radius:14px;
+  padding:14px;
+  min-height:64px;
+  text-align:right;
+  font-size:28px;
+  overflow-wrap:anywhere;
+}
+.grid{
+  margin-top:16px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+button{
+  height:58px;
+  border:none;
+  border-radius:50%;
+  font-size:18px;
+  color:var(--text);
+  background:var(--btn);
+}
+button.op{background:var(--op)}
+button.equal{
+  background:var(--green);
+  color:#000;
+  grid-row:span 2;
+  border-radius:30px;
+}
+button.clear{background:var(--red)}
+button:active{transform:scale(.95)}
 </style>
 </head>
 
@@ -63,70 +71,81 @@
 <div class="calc">
   <div id="display" class="display">0</div>
 
-  <div class="keys">
-    <button class="clear" onclick="clearAll()">C</button>
-    <button onclick="press('(')">(</button>
-    <button onclick="press(')')">)</button>
-    <button class="op" onclick="press('/')">÷</button>
+  <div class="grid">
+    <button class="clear" data-act="clear">C</button>
+    <button data-val="(">(</button>
+    <button data-val=")">)</button>
+    <button class="op" data-val="/">÷</button>
 
-    <button onclick="press('7')">7</button>
-    <button onclick="press('8')">8</button>
-    <button onclick="press('9')">9</button>
-    <button class="op" onclick="press('*')">×</button>
+    <button data-val="7">7</button>
+    <button data-val="8">8</button>
+    <button data-val="9">9</button>
+    <button class="op" data-val="*">×</button>
 
-    <button onclick="press('4')">4</button>
-    <button onclick="press('5')">5</button>
-    <button onclick="press('6')">6</button>
-    <button class="op" onclick="press('-')">−</button>
+    <button data-val="4">4</button>
+    <button data-val="5">5</button>
+    <button data-val="6">6</button>
+    <button class="op" data-val="-">−</button>
 
-    <button onclick="press('1')">1</button>
-    <button onclick="press('2')">2</button>
-    <button onclick="press('3')">3</button>
-    <button class="op" onclick="press('+')">+</button>
+    <button data-val="1">1</button>
+    <button data-val="2">2</button>
+    <button data-val="3">3</button>
+    <button class="op" data-val="+">+</button>
 
-    <button onclick="press('0')">0</button>
-    <button onclick="press('.')">.</button>
-    <button onclick="back()">⌫</button>
-    <button class="equal" onclick="calculate()">=</button>
+    <button data-val="0">0</button>
+    <button data-val=".">.</button>
+    <button data-act="back">⌫</button>
+    <button class="equal" data-act="eval">=</button>
   </div>
 </div>
 
-<script>
-  let expr = "";
+<script type="module">
+import init, { evaluate } from "./ultimate_calculator_engine.js";
 
-  const display = document.getElementById("display");
+const display = document.getElementById("display");
+let expr = "0";
 
-  function press(v) {
-    if (expr === "0") expr = "";
-    expr += v;
-    display.textContent = expr;
+function update(){ display.textContent = expr; }
+
+function append(v){
+  if(expr==="0") expr=v;
+  else expr+=v;
+  update();
+}
+
+function clearAll(){
+  expr="0"; update();
+}
+
+function back(){
+  expr = expr.length>1 ? expr.slice(0,-1) : "0";
+  update();
+}
+
+async function calc(){
+  try{
+    const res = evaluate(expr);
+    expr = res.toString();
+    update();
+  }catch(e){
+    expr="Error";
+    update();
+    setTimeout(()=>{expr="0";update()},800);
   }
+}
 
-  function clearAll() {
-    expr = "";
-    display.textContent = "0";
-  }
+await init();
 
-  function back() {
-    expr = expr.slice(0, -1);
-    display.textContent = expr || "0";
-  }
-
-  function calculate() {
-    try {
-      // SAFE eval (basic)
-      const result = Function("return " + expr)();
-      expr = result.toString();
-      display.textContent = expr;
-    } catch {
-      display.textContent = "Error";
-      expr = "";
-    }
-  }
+document.querySelectorAll("button").forEach(b=>{
+  if(b.dataset.val)
+    b.onclick=()=>append(b.dataset.val);
+  if(b.dataset.act==="clear")
+    b.onclick=clearAll;
+  if(b.dataset.act==="back")
+    b.onclick=back;
+  if(b.dataset.act==="eval")
+    b.onclick=calc;
+});
 </script>
-</body>
-</html>});
-</script>
-
 </body>
 </html>
