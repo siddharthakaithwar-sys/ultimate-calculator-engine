@@ -1,44 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ultimate Calculator (WASM)</title>
 
 <style>
-:root{
-  --bg:#0b1324;
-  --panel:#111b2e;
-  --btn:#1e2a44;
-  --op:#2b3b5f;
-  --green:#2ecc71;
-  --red:#e74c3c;
-  --text:#ffffff;
-}
-*{box-sizing:border-box;font-family:system-ui;}
 body{
   margin:0;
-  background:linear-gradient(180deg,#050b18,#0b1324);
-  min-height:100vh;
+  background:linear-gradient(180deg,#020617,#0b1324);
+  height:100vh;
   display:flex;
-  align-items:center;
   justify-content:center;
-  color:var(--text);
+  align-items:center;
+  font-family:system-ui;
+  color:white;
 }
 .calc{
   width:340px;
-  background:var(--panel);
+  background:#0b1324;
   border-radius:22px;
   padding:16px;
-  box-shadow:0 30px 80px rgba(0,0,0,.6);
+  box-shadow:0 40px 80px rgba(0,0,0,.7);
 }
 .display{
-  background:#050b18;
+  background:#020617;
   border-radius:14px;
-  padding:14px;
-  min-height:64px;
-  text-align:right;
+  padding:16px;
   font-size:28px;
+  text-align:right;
+  min-height:64px;
   overflow-wrap:anywhere;
 }
 .grid{
@@ -52,17 +43,17 @@ button{
   border:none;
   border-radius:50%;
   font-size:18px;
-  color:var(--text);
-  background:var(--btn);
+  color:white;
+  background:#1e293b;
 }
-button.op{background:var(--op)}
+button.op{background:#334155}
 button.equal{
-  background:var(--green);
-  color:#000;
+  background:#22c55e;
+  color:black;
   grid-row:span 2;
   border-radius:30px;
 }
-button.clear{background:var(--red)}
+button.clear{background:#ef4444}
 button:active{transform:scale(.95)}
 </style>
 </head>
@@ -94,8 +85,11 @@ button:active{transform:scale(.95)}
 
     <button data-val="0">0</button>
     <button data-val=".">.</button>
-    <button data-act="back">⌫</button>
+    <button data-val="%">%</button>
     <button class="equal" data-act="eval">=</button>
+
+    <button data-val="^">^</button>
+    <button data-act="back">⌫</button>
   </div>
 </div>
 
@@ -105,46 +99,39 @@ import init, { evaluate } from "./ultimate_calculator_engine.js";
 const display = document.getElementById("display");
 let expr = "0";
 
-function update(){ display.textContent = expr; }
+function render(){ display.textContent = expr; }
 
-function append(v){
+function add(v){
   if(expr==="0") expr=v;
   else expr+=v;
-  update();
+  render();
 }
 
-function clearAll(){
-  expr="0"; update();
-}
+function clearAll(){ expr="0"; render(); }
 
 function back(){
   expr = expr.length>1 ? expr.slice(0,-1) : "0";
-  update();
+  render();
 }
 
-async function calc(){
+async function run(){
   try{
-    const res = evaluate(expr);
-    expr = res.toString();
-    update();
-  }catch(e){
+    expr = evaluate(expr).toString();
+    render();
+  }catch{
     expr="Error";
-    update();
-    setTimeout(()=>{expr="0";update()},800);
+    render();
+    setTimeout(()=>{expr="0";render()},900);
   }
 }
 
 await init();
 
 document.querySelectorAll("button").forEach(b=>{
-  if(b.dataset.val)
-    b.onclick=()=>append(b.dataset.val);
-  if(b.dataset.act==="clear")
-    b.onclick=clearAll;
-  if(b.dataset.act==="back")
-    b.onclick=back;
-  if(b.dataset.act==="eval")
-    b.onclick=calc;
+  if(b.dataset.val) b.onclick=()=>add(b.dataset.val);
+  if(b.dataset.act==="clear") b.onclick=clearAll;
+  if(b.dataset.act==="back") b.onclick=back;
+  if(b.dataset.act==="eval") b.onclick=run;
 });
 </script>
 </body>
