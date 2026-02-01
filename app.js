@@ -1,90 +1,98 @@
-let expression = "";
-let degMode = true;
+let expr = "";
+let deg = true;
 
 const screen = document.getElementById("screen");
-const modeEl = document.getElementById("mode");
+const mode = document.getElementById("mode");
 const historyList = document.getElementById("historyList");
 
-function updateScreen(v) {
+function update(v) {
   screen.textContent = v;
 }
 
 function press(v) {
-  expression += v;
-  updateScreen(expression);
+  expr += v;
+  update(expr);
 }
 
 function backspace() {
-  expression = expression.slice(0, -1);
-  updateScreen(expression || "0");
+  expr = expr.slice(0, -1);
+  update(expr || "0");
 }
 
 function clearAll() {
-  expression = "";
-  updateScreen("0");
+  expr = "";
+  update("0");
 }
 
 function toggleDeg() {
-  degMode = !degMode;
-  modeEl.textContent = degMode ? "DEG" : "RAD";
+  deg = !deg;
+  mode.textContent = deg ? "DEG" : "RAD";
 }
 
 function func(f) {
-  expression += f + "(";
-  updateScreen(expression);
+  expr += f + "(";
+  update(expr);
 }
 
-/* ---------- DETECT FLOAT MODE ---------- */
-function needsFloat(exp) {
-  return /sin|cos|tan|\./.test(exp);
+/* ---------- PERCENT ---------- */
+function applyPercent(e) {
+  return e
+    .replace(/(\d+)([\+\-])(\d+)%/g,
+      (_, a, op, p) => `${a}${op}(${a}*${p}/100)`
+    )
+    .replace(/(\d+)([×÷])(\d+)%/g,
+      (_, a, op, p) => `${a}${op}(${p}/100)`
+    )
+    .replace(/(\d+)%/g, "($1/100)");
 }
 
-/* ---------- BIGINT EVALUATOR ---------- */
-function evalBigInt(exp) {
-  exp = exp.replace(/×/g, "*").replace(/÷/g, "/");
-
-  // power
-  exp = exp.replace(/(\d+)\^(\d+)/g, (_, a, b) => {
-    return `(${a}n ** ${b}n)`;
-  });
-
-  // % (simple %)
-  exp = exp.replace(/(\d+)%/g, (_, a) => {
-    return `(${a}n / 100n)`;
-  });
-
-  return eval(exp.replace(/(\d+)/g, "$1n")).toString();
+/* ---------- FLOAT DETECT ---------- */
+function needsFloat(e) {
+  return /sin|cos|tan|\./.test(e);
 }
 
-/* ---------- FLOAT EVALUATOR ---------- */
-function evalFloat(exp) {
-  exp = exp
+/* ---------- BIGINT ---------- */
+function evalBigInt(e) {
+  e = applyPercent(e)
+    .replace(/×/g, "*")
+    .replace(/÷/g, "/")
+    .replace(/(\d+)\^(\d+)/g, "($1n ** $2n)")
+    .replace(/(\d+)/g, "$1n");
+
+  return eval(e).toString();
+}
+
+/* ---------- FLOAT ---------- */
+function evalFloat(e) {
+  e = applyPercent(e)
+    .replace(/×/g, "*")
+    .replace(/÷/g, "/")
     .replace(/sin\(/g, "Math.sin(")
     .replace(/cos\(/g, "Math.cos(")
     .replace(/tan\(/g, "Math.tan(");
 
-  if (degMode) {
-    exp = exp.replace(/Math\.(sin|cos|tan)\(([^)]+)\)/g,
-      (_, fn, v) => `Math.${fn}(${v} * Math.PI / 180)`
+  if (deg) {
+    e = e.replace(
+      /Math\.(sin|cos|tan)\(([^)]+)\)/g,
+      (_, fn, v) => `Math.${fn}(${v}*Math.PI/180)`
     );
   }
 
-  let r = eval(exp);
-  return Number(r.toFixed(12)).toString();
+  return Number(eval(e).toFixed(12)).toString();
 }
 
 /* ---------- CALCULATE ---------- */
 function calculate() {
   try {
-    let result = needsFloat(expression)
-      ? evalFloat(expression)
-      : evalBigInt(expression);
+    let result = needsFloat(expr)
+      ? evalFloat(expr)
+      : evalBigInt(expr);
 
-    addHistory(expression, result);
-    expression = result;
-    updateScreen(result);
+    addHistory(expr, result);
+    expr = result;
+    update(result);
   } catch {
-    updateScreen("Error");
+    update("Error");
   }
 }
 
