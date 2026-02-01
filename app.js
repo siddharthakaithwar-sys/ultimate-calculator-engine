@@ -1,108 +1,78 @@
 let expr = "";
+let deg = true;
 const display = document.getElementById("display");
-const historyList = document.getElementById("historyList");
+const mode = document.getElementById("mode");
+const historyBox = document.getElementById("history");
 
-/* ---------- DISPLAY ---------- */
-function updateDisplay(text){
-  display.textContent = text || "0";
-}
-
-/* ---------- INPUT ---------- */
-function press(v){
-  if(expr === "Error") expr = "";
+function press(v) {
   expr += v;
-  updateDisplay(expr);
+  display.textContent = expr;
 }
 
-function clearAll(){
+function clearAll() {
   expr = "";
-  updateDisplay("0");
+  display.textContent = "0";
 }
 
-function backspace(){
-  expr = expr.slice(0,-1);
-  updateDisplay(expr);
+function backspace() {
+  expr = expr.slice(0, -1);
+  display.textContent = expr || "0";
 }
 
-/* ---------- BIG NUMBER ENGINE ---------- */
-function safeEval(expression){
-  // replace symbols
-  expression = expression
-    .replace(/×/g,"*")
-    .replace(/÷/g,"/");
-
-  // percentage
-  expression = expression.replace(/(\d+(\.\d+)?)%/g,"($1/100)");
-
-  // split tokens
-  const tokens = expression.match(/(\d+(\.\d+)?|[+\-*/])/g);
-  if(!tokens) throw "Invalid";
-
-  let result = tokens[0];
-
-  for(let i=1;i<tokens.length;i+=2){
-    const op = tokens[i];
-    const num = tokens[i+1];
-
-    if(op === "+") result = add(result, num);
-    else if(op === "-") result = add(result, "-" + num);
-    else if(op === "*") result = multiply(result, num);
-    else if(op === "/") result = divide(result, num);
-  }
-  return result;
+function toggleDeg() {
+  deg = !deg;
+  mode.textContent = deg ? "DEG" : "RAD";
 }
 
-/* ---------- ARITHMETIC (STRING BASED) ---------- */
-function add(a,b){
-  return (BigInt(a.replace(".","")) + BigInt(b.replace(".",""))).toString();
+function func(f) {
+  expr += f + "(";
+  display.textContent = expr;
 }
 
-function multiply(a,b){
-  return (BigInt(a.replace(".","")) * BigInt(b.replace(".",""))).toString();
+function percent() {
+  // handles a % b
+  expr += "%";
+  display.textContent = expr;
 }
 
-function divide(a,b){
-  if(BigInt(b) === 0n) throw "Zero";
-  return (BigInt(a) / BigInt(b)).toString();
-}
+function calculate() {
+  try {
+    let e = expr;
 
-/* ---------- FORMAT (NO SCIENTIFIC EVER) ---------- */
-function formatIndian(num){
-  let n = num.replace(/^-/,"");
-  let sign = num.startsWith("-") ? "-" : "";
+    // % logic
+    e = e.replace(/(\d+(\.\d+)?)\s*%\s*(\d+(\.\d+)?)/g,
+      (_, a, _, b) => `(${a}*${b}/100)`
+    );
 
-  if(n.length <= 3) return sign + n;
+    // trig
+    e = e.replace(/sin\(([^)]+)\)/g, (_, x) =>
+      Math.sin(deg ? x * Math.PI / 180 : x)
+    );
+    e = e.replace(/cos\(([^)]+)\)/g, (_, x) =>
+      Math.cos(deg ? x * Math.PI / 180 : x)
+    );
+    e = e.replace(/tan\(([^)]+)\)/g, (_, x) =>
+      Math.tan(deg ? x * Math.PI / 180 : x)
+    );
 
-  let last3 = n.slice(-3);
-  let rest = n.slice(0,-3);
-  rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");
+    let result = eval(e);
 
-  return sign + rest + "," + last3;
-}
+    // force readable (NO scientific notation)
+    let output = result.toString();
+    if (output.includes("e")) {
+      output = Number(result).toFixed(0);
+    }
 
-/* ---------- CALCULATE ---------- */
-function calculate(){
-  try{
-    const raw = safeEval(expr);
-    const formatted = formatIndian(raw);
+    historyBox.innerHTML += `<div>${expr} = ${output}</div>`;
+    display.textContent = output;
+    expr = output;
 
-    addHistory(expr, formatted);
-    expr = raw;
-    updateDisplay(formatted);
-  }catch{
-    expr = "Error";
-    updateDisplay("Error");
+  } catch {
+    display.textContent = "Error";
+    expr = "";
   }
 }
 
-/* ---------- HISTORY ---------- */
-function addHistory(exp,res){
-  const div = document.createElement("div");
-  div.className = "history-item";
-  div.textContent = `${exp} = ${res}`;
-  historyList.prepend(div);
-
-  if(historyList.children.length > 20){
-    historyList.removeChild(historyList.lastChild);
-  }
+function clearHistory() {
+  historyBox.innerHTML = "";
 }
